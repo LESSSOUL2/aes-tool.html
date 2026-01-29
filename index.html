@@ -1,16 +1,20 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AES CBC Encrypt / Decrypt Tool</title>
+  <title>Universal Encryption / Decryption Tool</title>
+
+  <!-- CryptoJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #0f1220;
       color: #ffffff;
       padding: 16px;
-      max-width: 480px;
+      max-width: 520px;
       margin: auto;
     }
     h1 {
@@ -18,7 +22,7 @@
       font-size: 1.3rem;
       margin-bottom: 16px;
     }
-    textarea, input {
+    textarea, input, select {
       width: 100%;
       padding: 12px;
       margin: 8px 0;
@@ -51,55 +55,168 @@
     }
   </style>
 </head>
-<body>  <h1>🔐 AES‑CBC Encrypt / Decrypt</h1><label>Text (Plaintext or Encrypted Base64)</label>
 
-  <textarea id="inputText" placeholder="Paste encrypted or plain text here"></textarea><label>Key / Passphrase</label> <input id="key" placeholder="Example: Fluton" />
+<body>
 
-<button onclick="encryptText()">Encrypt → Base64</button> <button onclick="decryptText()">Decrypt → Plaintext</button>
+<h1>🔐 Universal Encrypt / Decrypt Tool</h1>
+
+<label>Input Text</label>
+<textarea id="inputText" placeholder="Paste plaintext or encrypted text"></textarea>
+
+<label>Encoding / Conversion</label>
+<select id="conversion">
+  <option value="none">None</option>
+  <option value="b64encode">Text → Base64</option>
+  <option value="b64decode">Base64 → Text</option>
+</select>
+
+<label>Algorithm</label>
+<select id="algorithm">
+  <option value="AES">AES</option>
+  <option value="DES">DES</option>
+  <option value="TripleDES">TripleDES</option>
+</select>
+
+<label>Mode</label>
+<select id="mode">
+  <option value="CBC">CBC</option>
+  <option value="CFB">CFB</option>
+  <option value="ECB">ECB</option>
+  <option value="OFB">OFB</option>
+</select>
+
+<label>Key / Passphrase</label>
+<input id="key" placeholder="Example: Fluton" />
+
+<label>IV (optional – auto if empty)</label>
+<input id="iv" placeholder="16 chars for AES (optional)" />
+
+<button onclick="base64Convert()">Convert Base64</button>
+<button onclick="encryptText()">Encrypt → Base64</button>
+<button onclick="decryptText()">Decrypt → Plaintext</button>
 
 <label>Output</label>
+<textarea id="outputText" placeholder="Result appears here"></textarea>
 
-  <textarea id="outputText" placeholder="Result will appear here"></textarea>  <div class="note">
-    Uses AES‑CBC · Client‑side only · Works on Android browsers
-  </div><script>
-  function encryptText() {
-    const text = document.getElementById('inputText').value;
-    const key = document.getElementById('key').value;
+<button onclick="analyzeText()">🔍 Analyze Encryption / Encoding</button>
 
-    if (!text || !key) {
-      alert('Please enter text and key');
-      return;
+<div class="note">
+  Supports AES / DES / 3DES · CBC / CFB / ECB / OFB · Mobile Friendly
+</div>
+
+<script>
+/* Helpers */
+function getMode(m) {
+  return CryptoJS.mode[m];
+}
+
+function getAlgo(a) {
+  return CryptoJS[a];
+}
+
+/* Base64 Conversion */
+function base64Convert() {
+  const text = inputText.value.trim();
+  if (!text) return alert('Enter text');
+
+  if (conversion.value === 'b64encode') {
+    outputText.value = CryptoJS.enc.Base64.stringify(
+      CryptoJS.enc.Utf8.parse(text)
+    );
+  } else if (conversion.value === 'b64decode') {
+    try {
+      outputText.value = CryptoJS.enc.Utf8.stringify(
+        CryptoJS.enc.Base64.parse(text)
+      );
+    } catch (e) {
+      alert('Invalid Base64 input');
     }
+  }
+}
 
-    const encrypted = CryptoJS.AES.encrypt(text, CryptoJS.enc.Utf8.parse(key), {
-      mode: CryptoJS.mode.CBC,
-      padding: CryptoJS.pad.Pkcs7,
-      iv: CryptoJS.enc.Utf8.parse(key.padEnd(16, '0').slice(0,16))
+/* Encrypt */
+function encryptText() {
+  const text = inputText.value;
+  const keyVal = key.value;
+  if (!text || !keyVal) return alert('Enter text and key');
+
+  const algo = getAlgo(algorithm.value);
+  const modeVal = getMode(mode.value);
+
+  const ivVal = iv.value || keyVal.padEnd(16, '0').slice(0, 16);
+
+  const encrypted = algo.encrypt(text, CryptoJS.enc.Utf8.parse(keyVal), {
+    iv: CryptoJS.enc.Utf8.parse(ivVal),
+    mode: modeVal,
+    padding: CryptoJS.pad.Pkcs7
+  });
+
+  outputText.value = encrypted.toString();
+}
+
+/* Decrypt */
+function decryptText() {
+  const text = inputText.value;
+  const keyVal = key.value;
+  if (!text || !keyVal) return alert('Enter text and key');
+
+  try {
+    const algo = getAlgo(algorithm.value);
+    const modeVal = getMode(mode.value);
+    const ivVal = iv.value || keyVal.padEnd(16, '0').slice(0, 16);
+
+    const decrypted = algo.decrypt(text, CryptoJS.enc.Utf8.parse(keyVal), {
+      iv: CryptoJS.enc.Utf8.parse(ivVal),
+      mode: modeVal,
+      padding: CryptoJS.pad.Pkcs7
     });
 
-    document.getElementById('outputText').value = encrypted.toString();
+    outputText.value = decrypted.toString(CryptoJS.enc.Utf8);
+  } catch (e) {
+    alert('Decryption failed. Check settings.');
+  }
+}
+
+/* Analyze Encryption / Encoding */
+function analyzeText() {
+  const text = inputText.value.trim();
+  if (!text) return alert('Enter text to analyze');
+
+  let result = [];
+
+  // Base64 check
+  const b64regex = /^[A-Za-z0-9+/=\s]+$/;
+  if (b64regex.test(text) && text.length % 4 === 0) {
+    result.push('✔ Looks like Base64 encoded data');
   }
 
-  function decryptText() {
-    const text = document.getElementById('inputText').value;
-    const key = document.getElementById('key').value;
-
-    if (!text || !key) {
-      alert('Please enter text and key');
-      return;
-    }
-
-    try {
-      const decrypted = CryptoJS.AES.decrypt(text, CryptoJS.enc.Utf8.parse(key), {
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7,
-        iv: CryptoJS.enc.Utf8.parse(key.padEnd(16, '0').slice(0,16))
-      });
-
-      document.getElementById('outputText').value = decrypted.toString(CryptoJS.enc.Utf8);
-    } catch (e) {
-      alert('Decryption failed. Check key or text.');
-    }
+  // HEX check
+  const hexregex = /^[0-9a-fA-F\s]+$/;
+  if (hexregex.test(text) && text.replace(/\s/g, '').length % 2 === 0) {
+    result.push('✔ Looks like HEX encoded data');
   }
-</script></body>
+
+  // AES heuristic (block size)
+  try {
+    const raw = CryptoJS.enc.Base64.parse(text);
+    if (raw.sigBytes > 0 && raw.sigBytes % 16 === 0) {
+      result.push('✔ Possible AES encryption (16-byte blocks)');
+      result.push('ℹ Try AES-CBC or AES-ECB with a known key');
+    }
+  } catch (e) {}
+
+  // Entropy hint
+  if (!/\s/.test(text) && text.length > 20) {
+    result.push('✔ High-entropy text (likely encrypted)');
+  }
+
+  if (result.length === 0) {
+    result.push('⚠ Unable to identify format. Might be plain text.');
+  }
+
+  outputText.value = result.join('\n');
+}
+</script>
+
+</body>
 </html>
