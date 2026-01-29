@@ -2,245 +2,192 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Universal Crypto Tool v1.3.0</title>  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>  <style>
+  <title>Universal Crypto Tool v2.0.0</title>  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>  <style>
     :root{
       --bg:#020403;
-      --panel:rgba(0,20,10,0.55);
-      --border:rgba(0,255,120,0.25);
+      --panel:#03160c;
+      --border:rgba(0,255,120,0.35);
       --green:#00ff88;
-      --green-soft:#00c96b;
       --text:#eafff4;
       --muted:#7fa99a;
     }
 
     *{box-sizing:border-box}
-
     html{scroll-behavior:smooth}
 
     body{
       margin:0;
-      font-family:'Inter','JetBrains Mono','Poppins',system-ui,monospace;
-      background:radial-gradient(800px 400px at 20% -10%,rgba(0,255,120,0.12),transparent 60%),var(--bg);
+      font-family:'JetBrains Mono','Inter',monospace;
+      background:var(--bg);
       color:var(--text);
       min-height:100vh;
     }
 
-    .app{
-      max-width:680px;
-      margin:auto;
-      padding:26px 16px 40px;
-    }
+    .app{max-width:760px;margin:auto;padding:24px 14px 40px}
 
     h1{
       text-align:center;
       margin:0;
-      font-size:1.9rem;
+      font-size:2rem;
       font-weight:900;
       letter-spacing:1px;
       color:var(--green);
     }
 
-    .sub{
-      text-align:center;
-      margin:6px 0 24px;
+    .sub{text-align:center;margin:6px 0 20px;color:var(--muted)}
+
+    /* tabs */
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:18px}
+    .tab{
+      padding:10px 16px;
+      border:1px solid var(--border);
+      background:#000;
+      color:var(--green);
+      cursor:pointer;
+      border-radius:999px;
       font-size:.85rem;
-      color:var(--muted);
+      font-weight:700;
     }
+    .tab.active{background:rgba(0,255,120,0.15)}
 
     .panel{
+      display:none;
       background:var(--panel);
-      backdrop-filter:blur(14px);
       border:1px solid var(--border);
-      border-radius:18px;
+      border-radius:16px;
       padding:18px;
-      margin-bottom:22px;
-      box-shadow:0 0 40px rgba(0,255,120,0.12);
+      box-shadow:0 0 35px rgba(0,255,120,0.15);
     }
+    .panel.active{display:block}
 
-    label{
-      display:block;
-      margin-top:12px;
-      font-size:.75rem;
-      color:var(--muted);
-      letter-spacing:.3px;
-    }
-
+    label{display:block;margin-top:12px;font-size:.75rem;color:var(--muted)}
     textarea,input,select{
-      width:100%;
-      margin-top:6px;
-      padding:14px;
-      border-radius:14px;
-      background:rgba(0,0,0,0.65);
-      border:1px solid var(--border);
-      color:var(--green);
-      font-size:.95rem;
-      outline:none;
+      width:100%;margin-top:6px;padding:14px;border-radius:12px;
+      background:#000;border:1px solid var(--border);
+      color:var(--green);font-size:.9rem;outline:none
     }
-
-    textarea{min-height:96px;resize:vertical}
-
-    textarea:focus,input:focus,select:focus{
-      box-shadow:0 0 0 2px rgba(0,255,120,0.25);
-    }
+    textarea{min-height:90px;resize:vertical}
 
     .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 
-    .btn{
-      width:100%;
-      padding:14px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:rgba(0,0,0,0.75);
-      color:var(--green);
-      font-size:.9rem;
-      font-weight:700;
-      cursor:pointer;
-    }
-
-    .btn:hover{background:rgba(0,255,120,0.1)}
-
-    .footer{
-      text-align:center;
-      font-size:.75rem;
-      color:var(--muted);
-      margin-top:10px;
-    }
-
+    .footer{text-align:center;font-size:.75rem;color:var(--muted);margin-top:14px}
     .footer a{color:var(--green);text-decoration:none}
 
-    @media(max-width:420px){
-      .row,.row-3{grid-template-columns:1fr}
-    }
+    @media(max-width:420px){.row{grid-template-columns:1fr}}
   </style></head>
 <body><div class="app">
   <h1>Universal Crypto Tool</h1>
-  <div class="sub">Encryption Decryption</div>  <!-- MAIN -->  <div class="panel">
-    <label>Encrypted / Plain Text</label>
-    <textarea id="inputText"></textarea><div class="row">
+  <div class="sub">Encryption Decryption</div>  <div class="tabs">
+    <button class="tab active" onclick="showTab('enc')">Encryption</button>
+    <button class="tab" onclick="showTab('b64')">Base64</button>
+    <button class="tab" onclick="showTab('an')">Analyze</button>
+    <button class="tab" onclick="showTab('guess')">Key Guesser</button>
+  </div>  <!-- ENCRYPT / DECRYPT -->  <div id="enc" class="panel active">
+    <label>Input</label>
+    <textarea id="encInput"></textarea><div class="row">
   <div>
     <label>Algorithm</label>
-    <select id="algorithm">
-      <option>AES</option>
-      <option>DES</option>
-      <option>TripleDES</option>
-    </select>
+    <select id="encAlgo"><option>AES</option></select>
   </div>
   <div>
     <label>Mode</label>
-    <select id="mode">
-      <option>CBC</option>
-      <option>CFB</option>
-      <option>ECB</option>
-      <option>OFB</option>
-    </select>
+    <select id="encMode"><option>CBC</option></select>
   </div>
 </div>
 
-<label>Key / Passphrase</label>
-<input id="key" placeholder="secret-key">
+<label>Key</label>
+<input id="encKey" placeholder="secret-key" />
 
 <label>IV (optional)</label>
-<input id="iv">
+<input id="encIV" />
 
-<div class="row-3">
-  <button class="btn" onclick="runEncrypt()">Encrypt</button>
-  <button class="btn" onclick="runDecrypt()">Decrypt</button>
-  <button class="btn" onclick="runAnalyze()">Analyze</button>
-</div>
+<label>Realtime Output</label>
+<textarea id="encOutput" readonly></textarea>
 
-  </div>  <!-- KEY GUESSER -->  <div class="panel">
-    <label>Contextual Key Guesser (CTF Mode)</label>
-    <textarea id="contextInput"></textarea>
-    <button class="btn" onclick="runGuess()">Try Contextual Keys</button>
-  </div>  <!-- BASE64 -->  <div class="panel">
-    <label>Quick Base64 Tools</label>
-    <textarea id="b64Input"></textarea>
-    <div class="row">
-      <button class="btn" onclick="runEncode()">Text → Base64</button>
-      <button class="btn" onclick="runDecode()">Base64 → Text</button>
-    </div>
-  </div>  <!-- OUTPUT -->  <div class="panel">
-    <label>Output</label>
-    <textarea id="outputText" readonly></textarea>
-    <button class="btn" onclick="copyOutput()">Copy</button>
+  </div>  <!-- BASE64 -->  <div id="b64" class="panel">
+    <label>Input</label>
+    <textarea id="b64Input"></textarea><label>Realtime Output</label>
+<textarea id="b64Output" readonly></textarea>
+
+  </div>  <!-- ANALYZE -->  <div id="an" class="panel">
+    <label>Input</label>
+    <textarea id="anInput"></textarea><label>Analysis</label>
+<textarea id="anOutput" readonly></textarea>
+
+  </div>  <!-- KEY GUESSER -->  <div id="guess" class="panel">
+    <label>Encrypted Text</label>
+    <textarea id="guessCipher"></textarea><label>Context Text (articles, links, posts)</label>
+<textarea id="guessContext"></textarea>
+
+<label>Results</label>
+<textarea id="guessOutput" readonly></textarea>
+
+<button class="tab" style="margin-top:12px" onclick="runGuess()">Try Contextual Keys</button>
+
   </div>  <div class="footer">
-    Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v1.3.0
+    Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v2.0.0
   </div>
 </div><script>
-function clearOutput(){outputText.value=''}
-
-function getAlgo(a){return CryptoJS[a]}
-function getMode(m){return CryptoJS.mode[m]}
-
-function runEncrypt(){
-  clearOutput();
-  const t=inputText.value,k=key.value;if(!t||!k)return;
-  const ivv=iv.value||CryptoJS.lib.WordArray.random(16);
-  const enc=getAlgo(algorithm.value).encrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(ivv.toString().slice(0,16)),mode:getMode(mode.value),padding:CryptoJS.pad.Pkcs7});
-  outputText.value=enc.toString();
+/* tab logic */
+function showTab(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
 }
 
-function runDecrypt(){
-  clearOutput();
+/* realtime encryption/decryption */
+function realtimeEncrypt(){
+  encOutput.value='';
+  const t=encInput.value,k=encKey.value;
+  if(!t||!k) return;
   try{
-    const t=inputText.value,k=key.value;if(!t||!k)return;
-    const ivv=iv.value||k.padEnd(16,'0');
-    const dec=getAlgo(algorithm.value).decrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(ivv.slice(0,16)),mode:getMode(mode.value),padding:CryptoJS.pad.Pkcs7});
-    outputText.value=dec.toString(CryptoJS.enc.Utf8);
+    const iv=encIV.value||k.padEnd(16,'0');
+    const enc=CryptoJS.AES.encrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(iv.slice(0,16)),mode:CryptoJS.mode.CBC,padding:CryptoJS.pad.Pkcs7});
+    encOutput.value=enc.toString();
   }catch{}
 }
 
-function runAnalyze(){
-  clearOutput();
-  const t=inputText.value.trim();let r=[];
-  if(/^[A-Za-z0-9+/=\s]+$/.test(t)) r.push('[+] Base64-like data');
-  if(t.length>20) r.push('[+] High entropy (encrypted)');
-  outputText.value=r.join('\n')||'[!] No obvious pattern detected';
-}
+encInput.addEventListener('input',realtimeEncrypt);
+encKey.addEventListener('input',realtimeEncrypt);
+encIV.addEventListener('input',realtimeEncrypt);
 
-let keys=[];
+/* realtime base64 */
+b64Input.addEventListener('input',()=>{
+  try{b64Output.value=CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(b64Input.value))}
+  catch{b64Output.value=''}
+});
+
+/* realtime analyze */
+anInput.addEventListener('input',()=>{
+  anOutput.value='';
+  const t=anInput.value;
+  let r=[];
+  if(/^[A-Za-z0-9+/=\s]+$/.test(t)) r.push('[+] Base64-like');
+  if(t.length>20) r.push('[+] High entropy');
+  anOutput.value=r.join('\n')||'[!] No pattern detected';
+});
+
+/* contextual key guesser (manual) */
 function runGuess(){
-  clearOutput();
-  const txt=contextInput.value.toLowerCase();
-  const words=txt.match(/[a-z]{4,}/g)||[];
-  const freq={};
-  words.forEach(w=>freq[w]=(freq[w]||0)+1);
-  keys=Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,12);
+  guessOutput.value='';
+  const cipher=guessCipher.value;
+  const ctx=guessContext.value.toLowerCase();
+  const words=ctx.match(/[a-z]{4,}/g)||[];
+  const freq={};words.forEach(w=>freq[w]=(freq[w]||0)+1);
+  const keys=Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,12);
 
-  const cipher=inputText.value;
-  let results=[];
-
-  for(const k of keys){
+  let out='';
+  keys.forEach(k=>{
     try{
       const d=CryptoJS.AES.decrypt(cipher,k).toString(CryptoJS.enc.Utf8);
-      if(d && /[a-z]/i.test(d) && d.length>5){
-        results.push({key:k,text:d});
+      if(d && /[a-z]/i.test(d)){
+        out+=`Key: ${k}\n${d}\n\n`;
       }
     }catch{}
-  }
-
-  if(results.length===0){
-    outputText.value='[-] No key matched';
-    return;
-  }
-
-  let out='[+] Possible keys found:
-
-';
-  results.forEach((r,i)=>{
-    out+=`${i+1}. Key: ${r.key}
-${r.text}
-
-`;
   });
-  outputText.value=out;
-}
-}
 
-function runEncode(){clearOutput();outputText.value=CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(b64Input.value))}
-function runDecode(){clearOutput();try{outputText.value=CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(b64Input.value))}catch{}}
-
-function copyOutput(){navigator.clipboard.writeText(outputText.value)}
+  guessOutput.value=out||'No key matched';
+}
 </script></body>
 </html>
