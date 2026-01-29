@@ -2,7 +2,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Universal Crypto Tool v2.1.0</title>  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>  <style>
+  <title>Encryption Decryption Tool v2.2.0</title>  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>  <style>
     :root{
       --bg:#020403;
       --panel:#03160c;
@@ -23,12 +23,11 @@
       min-height:100vh;
     }
 
-    .app{max-width:760px;margin:auto;padding:24px 14px 40px}
+    .app{max-width:820px;margin:auto;padding:24px 14px 40px}
 
     h1{text-align:center;margin:0;font-size:2rem;font-weight:900;letter-spacing:1px;color:var(--green)}
-    .sub{text-align:center;margin:6px 0 20px;color:var(--muted)}
+    .sub{text-align:center;margin:6px 0 18px;color:var(--muted)}
 
-    /* tabs */
     .tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:18px}
     .tab{padding:10px 16px;border:1px solid var(--border);background:#000;color:var(--green);cursor:pointer;border-radius:999px;font-size:.85rem;font-weight:700}
     .tab.active{background:rgba(0,255,120,0.15)}
@@ -41,60 +40,72 @@
     textarea{min-height:90px;resize:vertical}
 
     .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+    .btn{margin-top:12px;padding:12px 16px;border-radius:999px;border:1px solid var(--border);background:#000;color:var(--green);font-weight:700;cursor:pointer}
+    .btn:hover{background:rgba(0,255,120,0.15)}
 
     .footer{text-align:center;font-size:.75rem;color:var(--muted);margin-top:14px}
     .footer a{color:var(--green);text-decoration:none}
 
-    @media(max-width:420px){.row{grid-template-columns:1fr}}
+    @media(max-width:420px){.row,.row-3{grid-template-columns:1fr}}
   </style></head>
 <body><div class="app">
-  <h1>Universal Crypto Tool</h1>
-  <div class="sub">Encryption Decryption</div>  <div class="tabs">
-    <button class="tab active" onclick="showTab(event,'enc')">Encryption</button>
-    <button class="tab" onclick="showTab(event,'b64')">Base64</button>
+  <h1>Encryption Decryption Tool</h1>
+  <div class="sub">All‑in‑One Crypto · Encode · Analyze · CTF</div>  <div class="tabs">
+    <button class="tab active" onclick="showTab(event,'enc')">Encrypt / Decrypt</button>
+    <button class="tab" onclick="showTab(event,'b64')">Base64 / HEX</button>
+    <button class="tab" onclick="showTab(event,'hash')">Hash</button>
     <button class="tab" onclick="showTab(event,'an')">Analyze</button>
     <button class="tab" onclick="showTab(event,'guess')">Key Guesser</button>
+    <button class="tab" onclick="showTab(event,'history')">History</button>
   </div>  <!-- ENCRYPT / DECRYPT -->  <div id="enc" class="panel active">
-    <label>Mode</label>
-    <select id="encAction">
-      <option value="encrypt">Encrypt</option>
-      <option value="decrypt">Decrypt</option>
-    </select><label>Input</label>
+    <label>Action</label>
+    <select id="encAction"><option value="encrypt">Encrypt</option><option value="decrypt">Decrypt</option></select><label>Input</label>
 <textarea id="encInput"></textarea>
 
 <div class="row">
   <div>
     <label>Algorithm</label>
-    <select id="encAlgo">
-      <option value="AES">AES</option>
-      <option value="DES">DES</option>
-      <option value="TripleDES">TripleDES</option>
-    </select>
+    <select id="encAlgo"><option>AES</option><option>DES</option><option>TripleDES</option></select>
   </div>
   <div>
-    <label>Cipher Mode</label>
-    <select id="encMode">
-      <option value="CBC">CBC</option>
-      <option value="CFB">CFB</option>
-      <option value="ECB">ECB</option>
-      <option value="OFB">OFB</option>
-    </select>
+    <label>Mode</label>
+    <select id="encMode"><option>CBC</option><option>CFB</option><option>ECB</option><option>OFB</option></select>
   </div>
 </div>
 
-<label>Key / Passphrase</label>
-<input id="encKey" placeholder="secret-key" />
+<label>Key</label>
+<input id="encKey" placeholder="secret-key">
 
 <label>IV (optional)</label>
-<input id="encIV" />
+<input id="encIV">
 
 <label>Realtime Output</label>
 <textarea id="encOutput" readonly></textarea>
 
-  </div>  <!-- BASE64 -->  <div id="b64" class="panel">
+  </div>  <!-- BASE64 / HEX -->  <div id="b64" class="panel">
     <label>Input</label>
-    <textarea id="b64Input"></textarea><label>Realtime Output</label>
+    <textarea id="b64Input"></textarea><div class="row">
+  <button class="btn" onclick="encodeBase64()">Text → Base64</button>
+  <button class="btn" onclick="decodeBase64()">Base64 → Text</button>
+</div>
+
+<div class="row">
+  <button class="btn" onclick="encodeHex()">Text → HEX</button>
+  <button class="btn" onclick="decodeHex()">HEX → Text</button>
+</div>
+
+<label>Output</label>
 <textarea id="b64Output" readonly></textarea>
+
+  </div>  <!-- HASH -->  <div id="hash" class="panel">
+    <label>Input</label>
+    <textarea id="hashInput"></textarea><label>Algorithm</label>
+<select id="hashAlgo"><option>SHA256</option><option>SHA1</option><option>MD5</option></select>
+
+<label>Hash Output</label>
+<textarea id="hashOutput" readonly></textarea>
 
   </div>  <!-- ANALYZE -->  <div id="an" class="panel">
     <label>Input</label>
@@ -103,18 +114,24 @@
 
   </div>  <!-- KEY GUESSER -->  <div id="guess" class="panel">
     <label>Encrypted Text</label>
-    <textarea id="guessCipher"></textarea><label>Context Text (articles, links, posts)</label>
+    <textarea id="guessCipher"></textarea><label>Context Text</label>
 <textarea id="guessContext"></textarea>
 
 <label>Results</label>
 <textarea id="guessOutput" readonly></textarea>
 
-<button class="tab" style="margin-top:12px" onclick="runGuess()">Try Contextual Keys</button>
+<button class="btn" onclick="runGuess()">Try Contextual Keys</button>
 
+  </div>  <!-- HISTORY -->  <div id="history" class="panel">
+    <label>Operation History</label>
+    <textarea id="historyLog" readonly></textarea>
+    <button class="btn" onclick="clearHistory()">Clear History</button>
+    <button class="btn" onclick="runSelfTest()">Run Self Test</button>
   </div>  <div class="footer">
-    Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v2.1.0
+    Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v2.2.0
   </div>
 </div><script>
+/* TAB LOGIC */
 function showTab(e,id){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -122,46 +139,63 @@ function showTab(e,id){
   e.target.classList.add('active');
 }
 
+let history=[];
+function log(msg){history.push(msg);historyLog.value=history.join('\n')}
+function clearHistory(){history=[];historyLog.value=''}
+
+/* REALTIME ENCRYPT / DECRYPT */
 function realtimeCrypto(){
   encOutput.value='';
-  const t=encInput.value;
-  const k=encKey.value;
+  const t=encInput.value,k=encKey.value;
   if(!t||!k) return;
-
   const algo=CryptoJS[encAlgo.value];
   const mode=CryptoJS.mode[encMode.value];
-  const ivVal=encIV.value||k.padEnd(16,'0');
-
+  const iv=encIV.value||k.padEnd(16,'0');
   try{
     if(encAction.value==='encrypt'){
-      const res=algo.encrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(ivVal.slice(0,16)),mode:mode,padding:CryptoJS.pad.Pkcs7});
-      encOutput.value=res.toString();
+      const r=algo.encrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(iv.slice(0,16)),mode,padding:CryptoJS.pad.Pkcs7});
+      encOutput.value=r.toString();
+      log('Encrypt '+encAlgo.value+'-'+encMode.value);
     }else{
-      const res=algo.decrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(ivVal.slice(0,16)),mode:mode,padding:CryptoJS.pad.Pkcs7});
-      encOutput.value=res.toString(CryptoJS.enc.Utf8);
+      const r=algo.decrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(iv.slice(0,16)),mode,padding:CryptoJS.pad.Pkcs7});
+      encOutput.value=r.toString(CryptoJS.enc.Utf8);
+      log('Decrypt '+encAlgo.value+'-'+encMode.value);
     }
   }catch{}
 }
-
 ['encInput','encKey','encIV','encAlgo','encMode','encAction'].forEach(id=>{
   document.getElementById(id).addEventListener('input',realtimeCrypto);
   document.getElementById(id).addEventListener('change',realtimeCrypto);
 });
 
-b64Input.addEventListener('input',()=>{
-  try{b64Output.value=CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(b64Input.value))}
-  catch{b64Output.value=''}
+/* BASE64 */
+function encodeBase64(){b64Output.value=CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(b64Input.value));log('Base64 encode')}
+function decodeBase64(){try{b64Output.value=CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(b64Input.value));log('Base64 decode')}catch{}}
+
+/* HEX */
+function encodeHex(){b64Output.value=CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse(b64Input.value));log('HEX encode')}
+function decodeHex(){try{b64Output.value=CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Hex.parse(b64Input.value));log('HEX decode')}catch{}}
+
+/* HASH */
+hashInput.addEventListener('input',()=>{
+  const t=hashInput.value;
+  if(!t){hashOutput.value='';return}
+  hashOutput.value=CryptoJS[hashAlgo.value](t).toString();
+  log('Hash '+hashAlgo.value);
 });
 
+/* ANALYZE */
 anInput.addEventListener('input',()=>{
   anOutput.value='';
   const t=anInput.value;
   let r=[];
   if(/^[A-Za-z0-9+/=\s]+$/.test(t)) r.push('[+] Base64-like');
+  if(/^[0-9a-fA-F\s]+$/.test(t)) r.push('[+] HEX-like');
   if(t.length>20) r.push('[+] High entropy');
   anOutput.value=r.join('\n')||'[!] No pattern detected';
 });
 
+/* KEY GUESSER */
 function runGuess(){
   guessOutput.value='';
   const cipher=guessCipher.value;
@@ -169,16 +203,28 @@ function runGuess(){
   const words=ctx.match(/[a-z]{4,}/g)||[];
   const freq={};words.forEach(w=>freq[w]=(freq[w]||0)+1);
   const keys=Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,12);
-
   let out='';
   keys.forEach(k=>{
     try{
       const d=CryptoJS.AES.decrypt(cipher,k).toString(CryptoJS.enc.Utf8);
-      if(d && /[a-z]/i.test(d)) out+=`Key: ${k}\n${d}\n\n`;
+      if(d&&/[a-z]/i.test(d)) out+=`Key: ${k}\n${d}\n\n`;
     }catch{}
   });
-
   guessOutput.value=out||'No key matched';
+  log('Key guessing tried');
+}
+
+/* SELF TEST */
+function runSelfTest(){
+  let ok=true;
+  try{
+    const t='test';
+    const k='key';
+    const e=CryptoJS.AES.encrypt(t,k).toString();
+    const d=CryptoJS.AES.decrypt(e,k).toString(CryptoJS.enc.Utf8);
+    if(d!==t) ok=false;
+  }catch{ok=false}
+  historyLog.value+=(ok?'\n[SELF TEST PASSED]':'\n[SELF TEST FAILED]');
 }
 </script></body>
 </html>
