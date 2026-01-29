@@ -1,166 +1,348 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Universal Crypto Tool v1.1.0</title>  <!-- CryptoJS -->  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>  <style>
+  <title>Universal Crypto Tool v1.2.1</title>
+
+  <!-- CryptoJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+  <style>
     :root{
-      --bg1:#0b1020;
-      --bg2:#0e1630;
-      --glass:rgba(255,255,255,0.08);
-      --glass-border:rgba(255,255,255,0.18);
-      --primary:#7c8cff;
-      --secondary:#38bdf8;
-      --accent:#22d3ee;
-      --text:#e5e7eb;
-      --muted:#9ca3af;
+      --glass:rgba(255,255,255,0.06);
+      --glass-border:rgba(255,255,255,0.15);
+      --highlight:rgba(125,211,252,0.35);
+      --text:#eaf6ff;
+      --muted:#9fb3c8;
     }
+
     *{box-sizing:border-box}
+
     body{
       margin:0;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-      background:radial-gradient(1200px 600px at 10% -10%,#1b2250 0%,var(--bg1) 60%),linear-gradient(180deg,var(--bg1),var(--bg2));
+      font-family:'Inter','Poppins',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
       color:var(--text);
-      padding:24px 14px;
+      background:
+        radial-gradient(800px 400px at 10% -10%,rgba(56,189,248,0.25),transparent 60%),
+        radial-gradient(600px 300px at 90% 10%,rgba(34,211,238,0.18),transparent 60%),
+        linear-gradient(180deg,#05080f,#070c1a);
+      min-height:100vh;
+      overflow-x:hidden;
     }
-    .app{max-width:620px;margin:auto}
-    .header{text-align:center;margin-bottom:20px}
-    .header h1{margin:0;font-size:1.55rem;letter-spacing:.3px}
-    .header p{margin:6px 0 0;color:var(--muted);font-size:.9rem}
-    .badge{display:inline-block;margin-top:8px;padding:5px 14px;border-radius:999px;font-size:.7rem;background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(10px)}
+
+    /* moving water light */
+    .water{
+      position:fixed;
+      inset:0;
+      background:linear-gradient(120deg,transparent 20%,rgba(255,255,255,0.04) 40%,transparent 60%);
+      animation:waterMove 12s linear infinite;
+      pointer-events:none;
+    }
+    @keyframes waterMove{
+      from{background-position:0 0}
+      to{background-position:1000px 0}
+    }
+
+    .app{
+      max-width:640px;
+      margin:auto;
+      padding:28px 16px 40px;
+      animation:fadeIn .8s ease;
+    }
+    @keyframes fadeIn{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:none}
+    }
+
+    h1{
+      text-align:center;
+      margin:0;
+      font-size:1.9rem;
+      font-weight:800;
+      letter-spacing:0.6px;
+    }
+    .sub{
+      text-align:center;
+      color:var(--muted);
+      font-size:.9rem;
+      margin:6px 0 22px;
+    }
 
     .glass{
-      background:linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03));
-      backdrop-filter:blur(18px);
+      background:var(--glass);
+      backdrop-filter:blur(28px) saturate(140%);
+      -webkit-backdrop-filter:blur(28px) saturate(140%);
       border:1px solid var(--glass-border);
-      border-radius:18px;
-      padding:16px;
-      margin-bottom:18px;
-      box-shadow:0 20px 40px rgba(0,0,0,0.45);
+      border-radius:22px;
+      padding:18px;
+      margin-bottom:22px;
+      box-shadow:0 30px 60px rgba(0,0,0,.55);
+      transition:transform .25s ease;
+    }
+    .glass:active{transform:scale(.99)}
+
+    label{
+      display:block;
+      margin-top:12px;
+      font-size:.78rem;
+      color:var(--muted);
     }
 
-    label{font-size:.8rem;color:var(--muted);display:block;margin-top:10px}
     textarea,input,select{
-      width:100%;margin-top:6px;padding:13px;border-radius:14px;
+      width:100%;
+      margin-top:6px;
+      padding:14px;
+      border-radius:18px;
+      background:rgba(255,255,255,0.03);
       border:1px solid var(--glass-border);
-      background:rgba(15,20,50,0.7);
-      color:var(--text);font-size:.95rem;outline:none
+      color:var(--text);
+      font-size:.95rem;
+      outline:none;
+      transition:border .2s ease, box-shadow .2s ease;
     }
-    textarea{min-height:100px;resize:vertical}
-    textarea:focus,input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(124,140,255,.3)}
+    textarea{min-height:96px;resize:vertical}
+    textarea:focus,input:focus,select:focus{
+      border-color:var(--highlight);
+      box-shadow:0 0 0 2px rgba(125,211,252,.25);
+    }
 
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 
     .btn{
-      width:100%;padding:13px;border-radius:16px;border:none;
-      font-size:.95rem;font-weight:500;cursor:pointer;margin-top:12px;
-      transition:all .15s ease
+      width:100%;
+      padding:14px;
+      border-radius:999px;
+      border:1px solid var(--glass-border);
+      background:rgba(255,255,255,0.05);
+      color:var(--text);
+      font-size:.9rem;
+      font-weight:600;
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+      transition:background .2s ease, transform .15s ease;
     }
-    .btn-primary{background:linear-gradient(135deg,var(--primary),#5568ff);color:#fff;box-shadow:0 12px 30px rgba(124,140,255,.45)}
-    .btn-secondary{background:rgba(20,30,70,.8);color:var(--text);border:1px solid var(--glass-border)}
-    .btn-accent{background:linear-gradient(135deg,var(--accent),var(--secondary));color:#002233;box-shadow:0 12px 30px rgba(34,211,238,.45)}
-    .btn:hover{transform:translateY(-1px)}
-    .btn:active{transform:translateY(0)}
+    .btn:hover{background:rgba(255,255,255,0.12)}
+    .btn:active{transform:scale(.97)}
 
-    .footer{text-align:center;font-size:.75rem;color:var(--muted);margin-top:10px}
-    .footer a{color:var(--primary);text-decoration:none}
+    /* ripple */
+    .btn::after{
+      content:'';
+      position:absolute;
+      inset:0;
+      background:radial-gradient(circle at var(--x,50%) var(--y,50%),rgba(255,255,255,.35),transparent 60%);
+      opacity:0;
+      transition:opacity .4s ease;
+    }
+    .btn:active::after{opacity:1}
 
-    @media(max-width:420px){.row,.row-3{grid-template-columns:1fr}}
-  </style></head>
+    /* loader bar */
+    .loader{
+      height:3px;
+      border-radius:3px;
+      background:linear-gradient(90deg,transparent,rgba(125,211,252,.8),transparent);
+      animation:load 1.2s infinite;
+      display:none;
+      margin-top:10px;
+    }
+    @keyframes load{
+      from{background-position:-200px}
+      to{background-position:200px}
+    }
+
+    .footer{
+      text-align:center;
+      font-size:.75rem;
+      color:var(--muted);
+      margin-top:10px;
+    }
+    .footer a{color:#7dd3fc;text-decoration:none}
+
+    @media(max-width:420px){
+      .row,.row-3{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+
 <body>
-<div class="app">  <div class="header">
-    <h1>🔐 Universal Crypto Tool</h1>
-    <p>Encrypt · Decrypt · Convert · Analyze · Guess Keys</p>
-    <div class="badge">v1.1.0 · Glass Edition</div>
-  </div>  <!-- MAIN TOOL -->  <div class="glass">
-    <label>Input Text (Encrypted / Plain)</label>
-    <textarea id="inputText" placeholder="Paste ciphertext or plaintext"></textarea><div class="row">
-  <div>
-    <label>Algorithm</label>
-    <select id="algorithm"><option>AES</option><option>DES</option><option>TripleDES</option></select>
+<div class="water"></div>
+
+<div class="app">
+  <h1>Universal Crypto Tool</h1>
+  <div class="sub">Water-Glass UI · Encrypt · Analyze · Guess Keys</div>
+
+  <!-- MAIN -->
+  <div class="glass">
+    <label>Encrypted / Plain Text</label>
+    <textarea id="inputText"></textarea>
+
+    <div class="row">
+      <div>
+        <label>Algorithm</label>
+        <select id="algorithm">
+          <option>AES</option>
+          <option>DES</option>
+          <option>TripleDES</option>
+        </select>
+      </div>
+      <div>
+        <label>Mode</label>
+        <select id="mode">
+          <option>CBC</option>
+          <option>CFB</option>
+          <option>ECB</option>
+          <option>OFB</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Key / Passphrase</label>
+    <input id="key" placeholder="secret-key">
+
+    <label>IV (optional)</label>
+    <input id="iv">
+
+    <div class="row-3">
+      <button class="btn" onclick="withLoad(encryptText)">Encrypt</button>
+      <button class="btn" onclick="withLoad(decryptText)">Decrypt</button>
+      <button class="btn" onclick="withLoad(analyzeText)">Analyze</button>
+    </div>
+
+    <div class="loader" id="mainLoader"></div>
   </div>
-  <div>
-    <label>Mode</label>
-    <select id="mode"><option>CBC</option><option>CFB</option><option>ECB</option><option>OFB</option></select>
-  </div>
-</div>
 
-<label>Key / Passphrase</label>
-<input id="key" placeholder="Example: secret-key">
-
-<label>IV (optional)</label>
-<input id="iv" placeholder="Leave empty if unknown">
-
-<div class="row-3">
-  <button class="btn btn-primary" onclick="encryptText()">Encrypt</button>
-  <button class="btn btn-secondary" onclick="decryptText()">Decrypt</button>
-  <button class="btn btn-accent" onclick="analyzeText()">Analyze</button>
-</div>
-
-  </div>  <!-- CONTEXTUAL KEY GUESSER -->  <div class="glass">
+  <!-- KEY GUESSER -->
+  <div class="glass">
     <label>Contextual Key Guesser (CTF Mode)</label>
-    <textarea id="contextInput" placeholder="Paste links, article text, tweets, website content, litepaper paragraphs…"></textarea><button class="btn btn-secondary" onclick="generateKeys()">🔑 Generate Possible Keys</button>
-<button class="btn btn-primary" onclick="tryKeys()">⚡ Try Keys (Safe Mode)</button>
+    <textarea id="contextInput"></textarea>
+    <button class="btn" onclick="guessFlow()">Start Key Guessing</button>
+    <div class="loader" id="guessLoader"></div>
+  </div>
 
-  </div>  <!-- OUTPUT -->  <div class="glass">
+  <!-- BASE64 -->
+  <div class="glass">
+    <label>Quick Base64 Tools</label>
+    <textarea id="b64Input"></textarea>
+    <div class="row">
+      <button class="btn" onclick="withLoad(encodeBase64)">Text → Base64</button>
+      <button class="btn" onclick="withLoad(decodeBase64)">Base64 → Text</button>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="glass">
     <label>Output</label>
-    <textarea id="outputText" placeholder="Result / analysis appears here"></textarea>
-    <button class="btn btn-secondary" onclick="copyOutput()">📋 Copy</button>
-  </div>  <div class="footer">
-    Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · Universal Crypto Tool
-  </div></div><script>
+    <textarea id="outputText"></textarea>
+    <button class="btn" onclick="copyOutput()">Copy</button>
+  </div>
+
+  <div class="footer">
+    Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v1.2.1
+  </div>
+</div>
+
+<script>
+/* ripple coords */
+document.querySelectorAll('.btn').forEach(b=>{
+  b.addEventListener('pointerdown',e=>{
+    b.style.setProperty('--x',e.offsetX+'px');
+    b.style.setProperty('--y',e.offsetY+'px');
+  });
+});
+
+/* loader wrapper */
+function withLoad(fn){
+  const l=document.getElementById('mainLoader');
+  l.style.display='block';
+  setTimeout(()=>{fn();l.style.display='none'},500);
+}
+
 function getAlgo(a){return CryptoJS[a]}
 function getMode(m){return CryptoJS.mode[m]}
 
 function encryptText(){
-  const t=inputText.value,k=key.value;if(!t||!k) return alert('Enter text and key');
+  const t=inputText.value,k=key.value;
+  if(!t||!k) return;
   const ivv=iv.value||CryptoJS.lib.WordArray.random(16);
-  const enc=getAlgo(algorithm.value).encrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(ivv.toString().slice(0,16)),mode:getMode(mode.value),padding:CryptoJS.pad.Pkcs7});
+  const enc=getAlgo(algorithm.value).encrypt(t,k,{
+    iv:CryptoJS.enc.Utf8.parse(ivv.toString().slice(0,16)),
+    mode:getMode(mode.value),
+    padding:CryptoJS.pad.Pkcs7
+  });
   outputText.value=enc.toString();
 }
 
 function decryptText(){
-  const t=inputText.value,k=key.value;if(!t||!k) return alert('Enter text and key');
   try{
+    const t=inputText.value,k=key.value;
+    if(!t||!k) return;
     const ivv=iv.value||k.padEnd(16,'0');
-    const dec=getAlgo(algorithm.value).decrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(ivv.slice(0,16)),mode:getMode(mode.value),padding:CryptoJS.pad.Pkcs7});
+    const dec=getAlgo(algorithm.value).decrypt(t,k,{
+      iv:CryptoJS.enc.Utf8.parse(ivv.slice(0,16)),
+      mode:getMode(mode.value),
+      padding:CryptoJS.pad.Pkcs7
+    });
     outputText.value=dec.toString(CryptoJS.enc.Utf8);
-  }catch{alert('Decryption failed')}
+  }catch{}
 }
 
 function analyzeText(){
-  const t=inputText.value.trim();let r=[];
-  if(/^[A-Za-z0-9+/=\s]+$/.test(t)&&t.length%4===0) r.push('✔ Base64 encoded');
-  try{const raw=CryptoJS.enc.Base64.parse(t);if(raw.sigBytes%16===0) r.push('✔ Possible AES (block size match)')}catch{}
-  if(!/\s/.test(t)&&t.length>20) r.push('✔ High entropy (encrypted)');
+  const t=inputText.value.trim();
+  let r=[];
+  if(/^[A-Za-z0-9+/=\s]+$/.test(t)) r.push('Base64-like data');
+  if(t.length>20) r.push('High entropy (encrypted)');
   outputText.value=r.join('\n')||'No obvious pattern detected';
 }
 
-let candidateKeys=[];
-function generateKeys(){
-  const text=contextInput.value.toLowerCase();
-  if(!text) return alert('Paste some context text or links');
-  const words=text.match(/[a-zA-Z]{4,}/g)||[];
-  const freq={};words.forEach(w=>freq[w]=(freq[w]||0)+1);
-  candidateKeys=Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,12);
-  outputText.value='Generated key candidates:\n'+candidateKeys.join('\n');
+/* key guessing */
+let keys=[];
+function guessFlow(){
+  const loader=document.getElementById('guessLoader');
+  loader.style.display='block';
+  setTimeout(()=>{
+    const txt=contextInput.value.toLowerCase();
+    const words=txt.match(/[a-z]{4,}/g)||[];
+    const freq={};
+    words.forEach(w=>freq[w]=(freq[w]||0)+1);
+    keys=Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,10);
+    tryKeys();
+    loader.style.display='none';
+  },900);
 }
 
 function tryKeys(){
-  if(candidateKeys.length===0) return alert('Generate keys first');
-  const cipher=inputText.value;
-  for(const k of candidateKeys){
+  const c=inputText.value;
+  for(const k of keys){
     try{
-      const dec=CryptoJS.AES.decrypt(cipher,k).toString(CryptoJS.enc.Utf8);
-      if(dec && dec.length>10 && /[a-z]/i.test(dec)){
-        outputText.value='✔ Possible key found: '+k+'\n\n'+dec;
+      const d=CryptoJS.AES.decrypt(c,k).toString(CryptoJS.enc.Utf8);
+      if(d && /[a-z]/i.test(d)){
+        outputText.value='Possible key: '+k+'\n\n'+d;
         return;
       }
     }catch{}
   }
-  outputText.value='❌ No valid plaintext found with generated keys';
+  outputText.value='No key matched';
 }
 
-function copyOutput(){navigator.clipboard.writeText(outputText.value)}
-</script></body>
+/* base64 */
+function encodeBase64(){
+  outputText.value=CryptoJS.enc.Base64.stringify(
+    CryptoJS.enc.Utf8.parse(b64Input.value)
+  );
+}
+function decodeBase64(){
+  try{
+    outputText.value=CryptoJS.enc.Utf8.stringify(
+      CryptoJS.enc.Base64.parse(b64Input.value)
+    );
+  }catch{}
+}
+
+function copyOutput(){
+  navigator.clipboard.writeText(outputText.value);
+}
+</script>
+</body>
 </html>
