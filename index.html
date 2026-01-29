@@ -143,10 +143,10 @@ function encryptText() {
   const algo = getAlgo(algorithm.value);
   const modeVal = getMode(mode.value);
 
-  const ivVal = iv.value || keyVal.padEnd(16, '0').slice(0, 16);
+  const ivVal = iv.value || CryptoJS.lib.WordArray.random(16);
 
-  const encrypted = algo.encrypt(text, CryptoJS.enc.Utf8.parse(keyVal), {
-    iv: CryptoJS.enc.Utf8.parse(ivVal),
+  const encrypted = algo.encrypt(text, keyVal, {
+    iv: CryptoJS.enc.Utf8.parse(ivVal.toString().slice(0,16)),
     mode: modeVal,
     padding: CryptoJS.pad.Pkcs7
   });
@@ -163,10 +163,11 @@ function decryptText() {
   try {
     const algo = getAlgo(algorithm.value);
     const modeVal = getMode(mode.value);
-    const ivVal = iv.value || keyVal.padEnd(16, '0').slice(0, 16);
 
-    const decrypted = algo.decrypt(text, CryptoJS.enc.Utf8.parse(keyVal), {
-      iv: CryptoJS.enc.Utf8.parse(ivVal),
+    const ivVal = iv.value || CryptoJS.enc.Utf8.parse(keyVal.padEnd(16, '0').slice(0,16));
+
+    const decrypted = algo.decrypt(text, keyVal, {
+      iv: CryptoJS.enc.Utf8.parse(ivVal.toString().slice(0,16)),
       mode: modeVal,
       padding: CryptoJS.pad.Pkcs7
     });
