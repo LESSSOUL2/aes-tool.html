@@ -2,229 +2,120 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Encryption Decryption Tool v2.2.0</title>  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>  <style>
-    :root{
-      --bg:#020403;
-      --panel:#03160c;
-      --border:rgba(0,255,120,0.35);
-      --green:#00ff88;
-      --text:#eafff4;
-      --muted:#7fa99a;
-    }
-
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-
-    body{
-      margin:0;
-      font-family:'JetBrains Mono','Inter',monospace;
-      background:var(--bg);
-      color:var(--text);
-      min-height:100vh;
-    }
-
-    .app{max-width:820px;margin:auto;padding:24px 14px 40px}
-
+  <title>Encryption Decryption Tool v2.4.0</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    :root{--bg:#020403;--panel:#03160c;--border:rgba(0,255,120,.35);--green:#00ff88;--text:#eafff4;--muted:#7fa99a}
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;font-family:'JetBrains Mono','Inter',monospace;background:var(--bg);color:var(--text)}
+    .app{max-width:880px;margin:auto;padding:24px 14px 40px}
     h1{text-align:center;margin:0;font-size:2rem;font-weight:900;letter-spacing:1px;color:var(--green)}
-    .sub{text-align:center;margin:6px 0 18px;color:var(--muted)}
-
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:18px}
+    .sub{text-align:center;margin:6px 0 12px;color:var(--muted)}
+    .bar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0 18px}
+    .pill{padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:#000;color:var(--green);font-size:.8rem;cursor:pointer}
+    .pill.active{background:rgba(0,255,120,.15)}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
     .tab{padding:10px 16px;border:1px solid var(--border);background:#000;color:var(--green);cursor:pointer;border-radius:999px;font-size:.85rem;font-weight:700}
-    .tab.active{background:rgba(0,255,120,0.15)}
-
-    .panel{display:none;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 0 35px rgba(0,255,120,0.15)}
+    .tab.active{background:rgba(0,255,120,.15)}
+    .panel{display:none;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 0 35px rgba(0,255,120,.15)}
     .panel.active{display:block}
-
     label{display:block;margin-top:12px;font-size:.75rem;color:var(--muted)}
     textarea,input,select{width:100%;margin-top:6px;padding:14px;border-radius:12px;background:#000;border:1px solid var(--border);color:var(--green);font-size:.9rem;outline:none}
     textarea{min-height:90px;resize:vertical}
-
     .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
     .btn{margin-top:12px;padding:12px 16px;border-radius:999px;border:1px solid var(--border);background:#000;color:var(--green);font-weight:700;cursor:pointer}
-    .btn:hover{background:rgba(0,255,120,0.15)}
-
+    .btn:hover{background:rgba(0,255,120,.15)}
     .footer{text-align:center;font-size:.75rem;color:var(--muted);margin-top:14px}
     .footer a{color:var(--green);text-decoration:none}
-
-    @media(max-width:420px){.row,.row-3{grid-template-columns:1fr}}
-  </style></head>
-<body><div class="app">
+    @media(max-width:520px){.row,.row3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="app">
   <h1>Encryption Decryption Tool</h1>
-  <div class="sub">ENCRYPT DECRYPT</div>  <div class="tabs">
+  <div class="sub">Guided · Full Toolkit · Context-Aware</div>  <!-- MODE SWITCHES -->  <div class="bar">
+    <button class="pill active" id="modeGuided" onclick="setMode('guided')">Guided Event Mode</button>
+    <button class="pill" id="modeFull" onclick="setMode('full')">Full Toolkit Mode</button>
+    <button class="pill" id="ivDet" onclick="toggleDetIV()">Deterministic IV: OFF</button>
+    <button class="pill active" id="varOn" onclick="toggleVariants()">Variants: ON</button>
+  </div>  <!-- TABS -->  <div class="tabs" id="tabs">
     <button class="tab active" onclick="showTab(event,'enc')">Encrypt / Decrypt</button>
-    <button class="tab" onclick="showTab(event,'b64')">Base64 / HEX</button>
-    <button class="tab" onclick="showTab(event,'hash')">Hash</button>
-    <button class="tab" onclick="showTab(event,'an')">Analyze</button>
     <button class="tab" onclick="showTab(event,'guess')">Key Guesser</button>
-    <button class="tab" onclick="showTab(event,'history')">History</button>
+    <button class="tab full" onclick="showTab(event,'b64')">Base64 / HEX</button>
+    <button class="tab full" onclick="showTab(event,'hash')">Hash</button>
+    <button class="tab full" onclick="showTab(event,'an')">Analyze</button>
   </div>  <!-- ENCRYPT / DECRYPT -->  <div id="enc" class="panel active">
     <label>Action</label>
-    <select id="encAction"><option value="encrypt">Encrypt</option><option value="decrypt">Decrypt</option></select><label>Input</label>
-<textarea id="encInput"></textarea>
-
-<div class="row">
-  <div>
-    <label>Algorithm</label>
-    <select id="encAlgo"><option>AES</option><option>DES</option><option>TripleDES</option></select>
-  </div>
-  <div>
-    <label>Mode</label>
-    <select id="encMode"><option>CBC</option><option>CFB</option><option>ECB</option><option>OFB</option></select>
-  </div>
-</div>
-
-<label>Key</label>
-<input id="encKey" placeholder="secret-key">
-
-<label>IV (optional)</label>
-<input id="encIV">
-
-<label>Realtime Output</label>
-<textarea id="encOutput" readonly></textarea>
-
-  </div>  <!-- BASE64 / HEX -->  <div id="b64" class="panel">
+    <select id="encAction"><option value="encrypt">Encrypt</option><option value="decrypt">Decrypt</option></select>
     <label>Input</label>
-    <textarea id="b64Input"></textarea><div class="row">
-  <button class="btn" onclick="encodeBase64()">Text → Base64</button>
-  <button class="btn" onclick="decodeBase64()">Base64 → Text</button>
-</div>
-
-<div class="row">
-  <button class="btn" onclick="encodeHex()">Text → HEX</button>
-  <button class="btn" onclick="decodeHex()">HEX → Text</button>
-</div>
-
-<label>Output</label>
-<textarea id="b64Output" readonly></textarea>
-
-  </div>  <!-- HASH -->  <div id="hash" class="panel">
-    <label>Input</label>
-    <textarea id="hashInput"></textarea><label>Algorithm</label>
-<select id="hashAlgo"><option>SHA256</option><option>SHA1</option><option>MD5</option></select>
-
-<label>Hash Output</label>
-<textarea id="hashOutput" readonly></textarea>
-
-  </div>  <!-- ANALYZE -->  <div id="an" class="panel">
-    <label>Input</label>
-    <textarea id="anInput"></textarea><label>Analysis</label>
-<textarea id="anOutput" readonly></textarea>
-
+    <textarea id="encInput"></textarea>
+    <div class="row">
+      <div>
+        <label>Algorithm</label>
+        <select id="encAlgo"><option>AES</option><option class="full">DES</option><option class="full">TripleDES</option></select>
+      </div>
+      <div>
+        <label>Mode</label>
+        <select id="encMode"><option>CBC</option><option class="full">CFB</option><option class="full">ECB</option><option class="full">OFB</option></select>
+      </div>
+    </div>
+    <label>Key</label><input id="encKey" placeholder="secret-key">
+    <label>IV (optional)</label><input id="encIV" placeholder="auto unless deterministic">
+    <label>Output</label><textarea id="encOutput" readonly></textarea>
   </div>  <!-- KEY GUESSER -->  <div id="guess" class="panel">
     <label>Encrypted Text</label>
-    <textarea id="guessCipher"></textarea><label>Context Text</label>
-<textarea id="guessContext"></textarea>
-
-<label>Results</label>
-<textarea id="guessOutput" readonly></textarea>
-
-<button class="btn" onclick="runGuess()">Try Contextual Keys</button>
-
-  </div>  <!-- HISTORY -->  <div id="history" class="panel">
-    <label>Operation History</label>
-    <textarea id="historyLog" readonly></textarea>
-    <button class="btn" onclick="clearHistory()">Clear History</button>
-    <button class="btn" onclick="runSelfTest()">Run Self Test</button>
-  </div>  <div class="footer">
-    Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v2.2.0
-  </div>
+    <textarea id="guessCipher"></textarea>
+    <label>Context Text</label>
+    <textarea id="guessContext"></textarea>
+    <button class="btn" onclick="runGuess()">Try Contextual Keys</button>
+    <label>Results</label>
+    <textarea id="guessOutput" readonly></textarea>
+  </div>  <!-- BASE64 / HEX -->  <div id="b64" class="panel">
+    <label>Input</label><textarea id="b64Input"></textarea>
+    <div class="row">
+      <button class="btn" onclick="encodeBase64()">Text → Base64</button>
+      <button class="btn" onclick="decodeBase64()">Base64 → Text</button>
+    </div>
+    <div class="row">
+      <button class="btn" onclick="encodeHex()">Text → HEX</button>
+      <button class="btn" onclick="decodeHex()">HEX → Text</button>
+    </div>
+    <label>Output</label><textarea id="b64Output" readonly></textarea>
+  </div>  <!-- HASH -->  <div id="hash" class="panel">
+    <label>Input</label><textarea id="hashInput"></textarea>
+    <label>Algorithm</label>
+    <select id="hashAlgo"><option>SHA256</option><option>SHA1</option><option>MD5</option></select>
+    <label>Output</label><textarea id="hashOutput" readonly></textarea>
+  </div>  <!-- ANALYZE -->  <div id="an" class="panel">
+    <label>Input</label><textarea id="anInput"></textarea>
+    <label>Analysis</label><textarea id="anOutput" readonly></textarea>
+  </div>  <div class="footer">Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v2.4.0</div>
 </div><script>
-/* TAB LOGIC */
-function showTab(e,id){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  e.target.classList.add('active');
-}
+let MODE='guided', DET_IV=false, VARIANTS=true;
+function setMode(m){MODE=m;document.getElementById('modeGuided').classList.toggle('active',m==='guided');document.getElementById('modeFull').classList.toggle('active',m==='full');document.querySelectorAll('.full').forEach(el=>el.style.display=(m==='full'?'':'none'));}
+function toggleDetIV(){DET_IV=!DET_IV;document.getElementById('ivDet').textContent='Deterministic IV: '+(DET_IV?'ON':'OFF');}
+function toggleVariants(){VARIANTS=!VARIANTS;document.getElementById('varOn').classList.toggle('active',VARIANTS);document.getElementById('varOn').textContent='Variants: '+(VARIANTS?'ON':'OFF');}
+function showTab(e,id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById(id).classList.add('active');e.target.classList.add('active');}
 
-let history=[];
-function log(msg){history.push(msg);historyLog.value=history.join('\n')}
-function clearHistory(){history=[];historyLog.value=''}
+function getIV(k){if(DET_IV){return CryptoJS.enc.Utf8.parse((k||'').padEnd(16,'0').slice(0,16));} return CryptoJS.lib.WordArray.random(16);}
 
-/* REALTIME ENCRYPT / DECRYPT */
-function realtimeCrypto(){
-  encOutput.value='';
-  const t=encInput.value,k=encKey.value;
-  if(!t||!k) return;
-  const algo=CryptoJS[encAlgo.value];
-  const mode=CryptoJS.mode[encMode.value];
-  const iv=encIV.value||k.padEnd(16,'0');
-  try{
-    if(encAction.value==='encrypt'){
-      const r=algo.encrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(iv.slice(0,16)),mode,padding:CryptoJS.pad.Pkcs7});
-      encOutput.value=r.toString();
-      log('Encrypt '+encAlgo.value+'-'+encMode.value);
-    }else{
-      const r=algo.decrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(iv.slice(0,16)),mode,padding:CryptoJS.pad.Pkcs7});
-      encOutput.value=r.toString(CryptoJS.enc.Utf8);
-      log('Decrypt '+encAlgo.value+'-'+encMode.value);
-    }
-  }catch{}
-}
-['encInput','encKey','encIV','encAlgo','encMode','encAction'].forEach(id=>{
-  document.getElementById(id).addEventListener('input',realtimeCrypto);
-  document.getElementById(id).addEventListener('change',realtimeCrypto);
-});
+function realtimeCrypto(){encOutput.value='';const t=encInput.value,k=encKey.value;if(!t||!k)return;const algo=CryptoJS[encAlgo.value];const mode=CryptoJS.mode[encMode.value];try{if(encAction.value==='encrypt'){const iv=getIV(k);const r=algo.encrypt(t,k,{iv,mode,padding:CryptoJS.pad.Pkcs7});encOutput.value=r.toString();}else{const iv=CryptoJS.enc.Utf8.parse((encIV.value||k).padEnd(16,'0').slice(0,16));const r=algo.decrypt(t,k,{iv,mode,padding:CryptoJS.pad.Pkcs7});encOutput.value=r.toString(CryptoJS.enc.Utf8);}}catch{}}
+['encInput','encKey','encIV','encAction','encAlgo','encMode'].forEach(id=>document.getElementById(id).addEventListener('input',realtimeCrypto));
 
-/* BASE64 */
-function encodeBase64(){b64Output.value=CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(b64Input.value));log('Base64 encode')}
-function decodeBase64(){try{b64Output.value=CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(b64Input.value));log('Base64 decode')}catch{}}
+function encodeBase64(){b64Output.value=CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(b64Input.value));}
+function decodeBase64(){try{b64Output.value=CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(b64Input.value));}catch{}}
+function encodeHex(){b64Output.value=CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse(b64Input.value));}
+function decodeHex(){try{b64Output.value=CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Hex.parse(b64Input.value));}catch{}}
 
-/* HEX */
-function encodeHex(){b64Output.value=CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse(b64Input.value));log('HEX encode')}
-function decodeHex(){try{b64Output.value=CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Hex.parse(b64Input.value));log('HEX decode')}catch{}}
+hashInput.addEventListener('input',()=>{const t=hashInput.value;if(!t){hashOutput.value='';return;}hashOutput.value=CryptoJS[hashAlgo.value](t).toString();});
 
-/* HASH */
-hashInput.addEventListener('input',()=>{
-  const t=hashInput.value;
-  if(!t){hashOutput.value='';return}
-  hashOutput.value=CryptoJS[hashAlgo.value](t).toString();
-  log('Hash '+hashAlgo.value);
-});
+anInput.addEventListener('input',()=>{const t=anInput.value;let r=[];if(/^[A-Za-z0-9+/=\s]+$/.test(t))r.push('[+] Base64-like');if(/^[0-9a-fA-F\s]+$/.test(t))r.push('[+] HEX-like');if(t.length>20)r.push('[+] High entropy');anOutput.value=r.join('\n')||'[!] No pattern detected';});
 
-/* ANALYZE */
-anInput.addEventListener('input',()=>{
-  anOutput.value='';
-  const t=anInput.value;
-  let r=[];
-  if(/^[A-Za-z0-9+/=\s]+$/.test(t)) r.push('[+] Base64-like');
-  if(/^[0-9a-fA-F\s]+$/.test(t)) r.push('[+] HEX-like');
-  if(t.length>20) r.push('[+] High entropy');
-  anOutput.value=r.join('\n')||'[!] No pattern detected';
-});
+function variantsOf(w){if(!VARIANTS)return [w];const s=new Set([w,w.toLowerCase(),w.toUpperCase(),w[0].toUpperCase()+w.slice(1),w+'1',w+'123']);return [...s];}
+function runGuess(){guessOutput.value='';const cipher=guessCipher.value;const ctx=guessContext.value.toLowerCase();const words=ctx.match(/[a-z]{4,}/g)||[];const freq={};words.forEach(w=>freq[w]=(freq[w]||0)+1);const base=Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,8);let tried=[],out='';base.forEach(b=>variantsOf(b).forEach(k=>{tried.push(k);try{const d=CryptoJS.AES.decrypt(cipher,k).toString(CryptoJS.enc.Utf8);if(d&&/[a-z]/i.test(d))out+=`✔ Key: ${k}\n${d}\n\n`;}catch{}}));guessOutput.value=out?out+`---\nTried Keys:\n${tried.join(', ')}`:`✖ No key matched\n\nTried Keys:\n${tried.join(', ')}\n\nPossible reasons:\n- Correct key not in context\n- Variant disabled\n- IV mismatch`;}
 
-/* KEY GUESSER */
-function runGuess(){
-  guessOutput.value='';
-  const cipher=guessCipher.value;
-  const ctx=guessContext.value.toLowerCase();
-  const words=ctx.match(/[a-z]{4,}/g)||[];
-  const freq={};words.forEach(w=>freq[w]=(freq[w]||0)+1);
-  const keys=Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,12);
-  let out='';
-  keys.forEach(k=>{
-    try{
-      const d=CryptoJS.AES.decrypt(cipher,k).toString(CryptoJS.enc.Utf8);
-      if(d&&/[a-z]/i.test(d)) out+=`Key: ${k}\n${d}\n\n`;
-    }catch{}
-  });
-  guessOutput.value=out||'No key matched';
-  log('Key guessing tried');
-}
-
-/* SELF TEST */
-function runSelfTest(){
-  let ok=true;
-  try{
-    const t='test';
-    const k='key';
-    const e=CryptoJS.AES.encrypt(t,k).toString();
-    const d=CryptoJS.AES.decrypt(e,k).toString(CryptoJS.enc.Utf8);
-    if(d!==t) ok=false;
-  }catch{ok=false}
-  historyLog.value+=(ok?'\n[SELF TEST PASSED]':'\n[SELF TEST FAILED]');
-}
+// init
+setMode('guided');
 </script></body>
 </html>
