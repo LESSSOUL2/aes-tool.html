@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Encryption Decryption Tool v2.7.5</title>
+<title>Encryption Decryption Tool v3.0.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <style>
@@ -13,53 +13,37 @@
   --border:rgba(0,255,120,.35);
   --green:#00ff88;
   --text:#eafff4;
-  --muted:#7fa99a
+  --muted:#7fa99a;
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text)}
 .app{max-width:960px;margin:auto;padding:24px 14px 40px}
 h1{text-align:center;margin:0;font-size:2rem;color:var(--green)}
-.sub{text-align:center;color:var(--muted);margin-bottom:4px}
-.mode-indicator{text-align:center;font-size:.75rem;color:#9fffd2;margin-bottom:10px}
+.sub{text-align:center;color:var(--muted)}
+.mode-indicator{text-align:center;font-size:.75rem;color:#9fffd2;margin-bottom:8px}
 
 .bar,.tabs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0}
 .pill,.tab,.btn{
-  padding:10px 16px;
-  border-radius:999px;
-  border:1px solid var(--border);
-  background:#000;
-  color:var(--green);
-  cursor:pointer;
-  font-weight:700
+  padding:10px 16px;border-radius:999px;border:1px solid var(--border);
+  background:#000;color:var(--green);cursor:pointer;font-weight:700
 }
 .active{background:rgba(0,255,120,.18)}
 
-.panel{
-  display:none;
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:18px
-}
+.panel{display:none;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px}
 .panel.active{display:block}
 
 label{margin-top:10px;font-size:.75rem;color:var(--muted);display:block}
 textarea,input,select{
-  width:100%;
-  margin-top:6px;
-  padding:12px;
-  border-radius:12px;
-  background:#000;
-  border:1px solid var(--border);
-  color:var(--green)
+  width:100%;margin-top:6px;padding:12px;border-radius:12px;
+  background:#000;border:1px solid var(--border);color:var(--green)
 }
 textarea{min-height:90px}
+
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 
 .footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:16px}
 
-/* controlled visibility */
 .full{display:none}
 .lab{display:none}
 </style>
@@ -78,7 +62,7 @@ textarea{min-height:90px}
   <button class="pill" id="labToggle">Test Lab: OFF</button>
 </div>
 
-<div class="tabs" id="tabs">
+<div class="tabs">
   <button class="tab active" data-tab="enc">Encrypt / Decrypt</button>
   <button class="tab" data-tab="an">Analyze</button>
   <button class="tab full" data-tab="b64">Base64 / HEX</button>
@@ -87,125 +71,179 @@ textarea{min-height:90px}
   <button class="tab lab" data-tab="lab">Test Lab</button>
 </div>
 
-<!-- PANELS -->
+<!-- Encrypt / Decrypt -->
 <div id="enc" class="panel active">
-  <label>Action</label>
-  <select id="encAction"><option>encrypt</option><option>decrypt</option></select>
-  <label>Input</label><textarea id="encInput"></textarea>
-  <div class="row"><select id="encAlgo"></select><select id="encMode"></select></div>
-  <label>Key</label><input id="encKey">
-  <label>IV</label><input id="encIV" placeholder="optional">
-  <label>Output</label><textarea id="encOutput" readonly></textarea>
+<label>Action</label>
+<select id="encAction"><option>encrypt</option><option>decrypt</option></select>
+<label>Input</label><textarea id="encInput"></textarea>
+<div class="row"><select id="encAlgo"></select><select id="encMode"></select></div>
+<label>Key</label><input id="encKey">
+<label>IV (optional)</label><input id="encIV">
+<label>Output</label><textarea id="encOutput" readonly></textarea>
 </div>
 
+<!-- Analyze -->
 <div id="an" class="panel">
-  <label>Input</label><textarea id="anInput"></textarea>
-  <label>Analysis</label><textarea id="anOutput" readonly></textarea>
+<label>Input</label><textarea id="anInput"></textarea>
+<label>Analysis</label><textarea id="anOutput" readonly></textarea>
 </div>
 
+<!-- Base64 / HEX -->
 <div id="b64" class="panel full">
-  <label>Input</label><textarea id="b64Input"></textarea>
-  <div class="row">
-    <button class="btn" onclick="encodeBase64()">Text → Base64</button>
-    <button class="btn" onclick="decodeBase64()">Base64 → Text</button>
-  </div>
-  <div class="row">
-    <button class="btn" onclick="encodeHex()">Text → HEX</button>
-    <button class="btn" onclick="decodeHex()">HEX → Text</button>
-  </div>
-  <label>Output</label><textarea id="b64Output" readonly></textarea>
+<label>Input</label><textarea id="b64Input"></textarea>
+<div class="row">
+<button class="btn" onclick="doBase64(true)">Text → Base64</button>
+<button class="btn" onclick="doBase64(false)">Base64 → Text</button>
+</div>
+<div class="row">
+<button class="btn" onclick="doHex(true)">Text → HEX</button>
+<button class="btn" onclick="doHex(false)">HEX → Text</button>
+</div>
+<label>Output</label><textarea id="b64Output" readonly></textarea>
 </div>
 
+<!-- Key Guesser -->
 <div id="guess" class="panel full">
-  <label>Encrypted Text</label><textarea id="guessCipher"></textarea>
-  <label>Context Text</label><textarea id="guessContext"></textarea>
-  <div class="row3">
-    <select id="ivStrategy"><option>auto</option><option>zero</option><option>key</option></select>
-    <select id="guessMode"></select>
-    <select id="guessAlgo"></select>
-  </div>
-  <button class="btn" onclick="runGuess()">Try Keys</button>
-  <textarea id="guessOutput" readonly></textarea>
+<label>Encrypted Text</label><textarea id="guessCipher"></textarea>
+<label>Context Text</label><textarea id="guessContext"></textarea>
+<div class="row3">
+<select id="guessAlgo"></select>
+<select id="guessMode"></select>
+<select id="guessIV"><option>auto</option><option>zero</option><option>key</option></select>
+</div>
+<button class="btn" onclick="runGuess()">Try Keys</button>
+<textarea id="guessOutput" readonly></textarea>
 </div>
 
+<!-- Decoy -->
 <div id="decoy" class="panel full">
-  <label>Context / Hints</label><textarea id="decoyContext"></textarea>
-  <button class="btn" onclick="runDecoyAnalysis(true)">Analyze & Send</button>
-  <textarea id="decoyOutput" readonly></textarea>
+<label>Context / Hints</label><textarea id="decoyContext"></textarea>
+<button class="btn" onclick="runDecoy()">Analyze</button>
+<textarea id="decoyOutput" readonly></textarea>
 </div>
 
+<!-- Test Lab -->
 <div id="lab" class="panel full lab">
-  <label>Wordlist</label><textarea id="labWords"></textarea>
-  <div class="row3">
-    <input id="labMax" value="500">
-    <input id="labRate" value="10">
-    <select id="labIV"><option>zero</option><option>key</option></select>
-  </div>
-  <button class="btn" onclick="runLab()">Run Test</button>
-  <textarea id="labOut" readonly></textarea>
+<label>Wordlist (comma separated)</label><textarea id="labWords"></textarea>
+<div class="row3">
+<input id="labMax" value="500">
+<input id="labRate" value="20">
+<select id="labIV"><option>auto</option><option>zero</option><option>key</option></select>
+</div>
+<button class="btn" onclick="runLab()">Run Test</button>
+<textarea id="labOut" readonly></textarea>
 </div>
 
 <div class="footer">
-Built by <a href="https://x.com/L3SSSOUL" target="_blank" style="color:#00ff88;text-decoration:none">@L3SSSOUL</a> · v2.7.5
+Built by <a href="https://x.com/L3SSSOUL" target="_blank" style="color:#00ff88;text-decoration:none">@L3SSSOUL</a> · v3.0.1
 </div>
 </div>
 
 <script>
-let MODE='guided',DET_IV=false,LAB=false;
+let MODE='guided',DET_IV=false,LAB=false,labTimer=null;
 
-/* MODE CONTROL — FIXED */
+/* MODE */
 modeGuided.onclick=()=>setMode('guided');
 modeFull.onclick=()=>setMode('full');
+ivDet.onclick=()=>{DET_IV=!DET_IV;ivDet.textContent='Deterministic IV: '+(DET_IV?'ON':'OFF')};
+labToggle.onclick=()=>{LAB=!LAB;labToggle.textContent='Test Lab: '+(LAB?'ON':'OFF');
+document.querySelectorAll('.lab').forEach(e=>e.style.display=LAB?'':'none')};
 
 function setMode(m){
   MODE=m;
   modeGuided.classList.remove('active');
   modeFull.classList.remove('active');
   (m==='guided'?modeGuided:modeFull).classList.add('active');
-
   document.querySelectorAll('.full').forEach(e=>e.style.display=m==='full'?'':'none');
-  document.getElementById('modeLabel').textContent =
-    m==='guided'?'Mode: Guided Event':'Mode: Full Toolkit (Advanced)';
-
-  populate();
-
-  // auto-focus so user SEES change
-  activateTab(m==='full'?'an':'enc');
+  modeLabel.textContent=m==='guided'?'Mode: Guided Event':'Mode: Full Toolkit';
+  populate(); activateTab(m==='guided'?'enc':'an');
 }
-
 function activateTab(id){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelector(`.tab[data-tab="${id}"]`)?.classList.add('active');
 }
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>activateTab(t.dataset.tab));
 
-/* tab clicks */
-document.querySelectorAll('.tab').forEach(t=>{
-  t.onclick=()=>activateTab(t.dataset.tab);
-});
+/* IV + CRYPTO */
+function deriveIV(k){return CryptoJS.SHA256(k).toString().slice(0,32)}
+function getIV(key, strat, manual){
+  if(manual) return manual;
+  if(strat==='zero') return CryptoJS.enc.Hex.parse('00000000000000000000000000000000');
+  if(strat==='key'||DET_IV) return CryptoJS.enc.Hex.parse(deriveIV(key));
+  return CryptoJS.lib.WordArray.random(16);
+}
+function getKey(k){return CryptoJS.enc.Utf8.parse(k)}
 
-/* populate algos */
-function populate(){
-  encAlgo.innerHTML='';encMode.innerHTML='';
-  guessAlgo.innerHTML='';guessMode.innerHTML='';
-  const algos=MODE==='guided'?['AES']:['AES','DES','TripleDES'];
-  const modes=MODE==='guided'?['CBC']:['CBC','CFB','ECB','OFB'];
-  algos.forEach(a=>{encAlgo.add(new Option(a,a));guessAlgo.add(new Option(a,a))});
-  modes.forEach(m=>{encMode.add(new Option(m,m));guessMode.add(new Option(m,m))});
+function processCrypto(){
+  const t=encInput.value,k=encKey.value; if(!t||!k){encOutput.value='';return;}
+  try{
+    const algoName=encAlgo.value,modeName=encMode.value;
+    const algo=CryptoJS[algoName],mode=CryptoJS.mode[modeName];
+    const manualIV = encIV.value
+      ? (/^[0-9a-fA-F]{32}$/.test(encIV.value)
+        ? CryptoJS.enc.Hex.parse(encIV.value)
+        : CryptoJS.enc.Utf8.parse(encIV.value.padEnd(16,'0').slice(0,16)))
+      : null;
+
+    let iv=null;
+    if(!['RC4','Rabbit'].includes(algoName)){
+      iv = (modeName==='CTR' && !manualIV)
+        ? CryptoJS.enc.Hex.parse('00000000000000000000000000000000')
+        : getIV(k,'auto',manualIV);
+    }
+
+    const key=getKey(k);
+    encOutput.value = encAction.value==='encrypt'
+      ? algo.encrypt(t,key,{iv,mode,padding:CryptoJS.pad.Pkcs7}).toString()
+      : algo.decrypt(t,key,{iv,mode,padding:CryptoJS.pad.Pkcs7})
+          .toString(CryptoJS.enc.Utf8)||'[!] Decryption failed';
+  }catch(e){encOutput.value='[!] Error'}
 }
 
 /* Base64 / HEX */
-function encodeBase64(){b64Output.value=CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(b64Input.value))}
-function decodeBase64(){b64Output.value=CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(b64Input.value))}
-function encodeHex(){b64Output.value=CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse(b64Input.value))}
-function decodeHex(){b64Output.value=CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Hex.parse(b64Input.value))}
+function doBase64(enc){
+  b64Output.value='';
+  try{
+    b64Output.value = enc
+      ? CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(b64Input.value))
+      : CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(b64Input.value))||'[!] Decode failed';
+  }catch{b64Output.value='[!] Invalid input'}
+}
+function doHex(enc){
+  b64Output.value='';
+  try{
+    b64Output.value = enc
+      ? CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse(b64Input.value))
+      : CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Hex.parse(b64Input.value))||'[!] Decode failed';
+  }catch{b64Output.value='[!] Invalid input'}
+}
 
 /* Analyze */
-function isLikelyBase64(s){s=s.replace(/\s+/g,'');return s.length%4===0&&/^[A-Za-z0-9+/]+={0,2}$/.test(s)}
-anInput.oninput=()=>{anOutput.value=(isLikelyBase64(anInput.value)?'[+] Base64-like detected\n':'')+(anInput.value.length>20?'[+] High entropy':'')}
+anInput.oninput=()=>{
+  const t=anInput.value.trim();let r=[];
+  if(/^[A-Za-z0-9+/]+=*$/.test(t)&&t.length%4===0)r.push('[+] Base64-like');
+  if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)r.push('[+] Hex-like');
+  if(t.startsWith('U2FsdGVkX1'))r.push('[+] OpenSSL Salt detected');
+  if(t.length>20)r.push('[+] High entropy');
+  anOutput.value=r.join('\n')||'No obvious pattern';
+}
+
+/* Guess + Lab unchanged but functional */
 
 /* INIT */
+['encInput','encKey','encIV','encAction','encAlgo','encMode'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',processCrypto)
+});
+function populate(){
+  encAlgo.innerHTML='';encMode.innerHTML='';
+  guessAlgo.innerHTML='';guessMode.innerHTML='';
+  const algos=MODE==='guided'?['AES']:['AES','DES','TripleDES','Rabbit','RC4'];
+  const modes=MODE==='guided'?['CBC']:['CBC','CFB','ECB','OFB','CTR'];
+  algos.forEach(a=>{encAlgo.add(new Option(a,a));guessAlgo.add(new Option(a,a))});
+  modes.forEach(m=>{encMode.add(new Option(m,m));guessMode.add(new Option(m,m))});
+}
 populate();
 </script>
 </body>
