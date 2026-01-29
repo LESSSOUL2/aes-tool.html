@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AES CBC Encrypt / Decrypt Tool</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1220;
+      color: #ffffff;
+      padding: 16px;
+      max-width: 480px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+    }
+    textarea, input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.95rem;
+    }
+    textarea {
+      min-height: 90px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #4f46e5;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #4338ca;
+    }
+    .note {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>  <h1>🔐 AES‑CBC Encrypt / Decrypt</h1><label>Text (Plaintext or Encrypted Base64)</label>
+
+  <textarea id="inputText" placeholder="Paste encrypted or plain text here"></textarea><label>Key / Passphrase</label> <input id="key" placeholder="Example: Fluton" />
+
+<button onclick="encryptText()">Encrypt → Base64</button> <button onclick="decryptText()">Decrypt → Plaintext</button>
+
+<label>Output</label>
+
+  <textarea id="outputText" placeholder="Result will appear here"></textarea>  <div class="note">
+    Uses AES‑CBC · Client‑side only · Works on Android browsers
+  </div><script>
+  function encryptText() {
+    const text = document.getElementById('inputText').value;
+    const key = document.getElementById('key').value;
+
+    if (!text || !key) {
+      alert('Please enter text and key');
+      return;
+    }
+
+    const encrypted = CryptoJS.AES.encrypt(text, CryptoJS.enc.Utf8.parse(key), {
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+      iv: CryptoJS.enc.Utf8.parse(key.padEnd(16, '0').slice(0,16))
+    });
+
+    document.getElementById('outputText').value = encrypted.toString();
+  }
+
+  function decryptText() {
+    const text = document.getElementById('inputText').value;
+    const key = document.getElementById('key').value;
+
+    if (!text || !key) {
+      alert('Please enter text and key');
+      return;
+    }
+
+    try {
+      const decrypted = CryptoJS.AES.decrypt(text, CryptoJS.enc.Utf8.parse(key), {
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+        iv: CryptoJS.enc.Utf8.parse(key.padEnd(16, '0').slice(0,16))
+      });
+
+      document.getElementById('outputText').value = decrypted.toString(CryptoJS.enc.Utf8);
+    } catch (e) {
+      alert('Decryption failed. Check key or text.');
+    }
+  }
+</script></body>
+</html>
