@@ -1,110 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Universal Crypto Tool v1.2.1</title>
-
-  <!-- CryptoJS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
-  <style>
+  <title>Universal Crypto Tool v1.3.0</title>  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>  <style>
     :root{
-      --glass:rgba(255,255,255,0.06);
-      --glass-border:rgba(255,255,255,0.15);
-      --highlight:rgba(125,211,252,0.35);
-      --text:#eaf6ff;
-      --muted:#9fb3c8;
+      --bg:#020403;
+      --panel:rgba(0,20,10,0.55);
+      --border:rgba(0,255,120,0.25);
+      --green:#00ff88;
+      --green-soft:#00c96b;
+      --text:#eafff4;
+      --muted:#7fa99a;
     }
 
     *{box-sizing:border-box}
 
+    html{scroll-behavior:smooth}
+
     body{
       margin:0;
-      font-family:'Inter','Poppins',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      font-family:'Inter','JetBrains Mono','Poppins',system-ui,monospace;
+      background:radial-gradient(800px 400px at 20% -10%,rgba(0,255,120,0.12),transparent 60%),var(--bg);
       color:var(--text);
-      background:
-        radial-gradient(800px 400px at 10% -10%,rgba(56,189,248,0.25),transparent 60%),
-        radial-gradient(600px 300px at 90% 10%,rgba(34,211,238,0.18),transparent 60%),
-        linear-gradient(180deg,#05080f,#070c1a);
       min-height:100vh;
-      overflow-x:hidden;
-    }
-
-    /* moving water light */
-    .water{
-      position:fixed;
-      inset:0;
-      background:linear-gradient(120deg,transparent 20%,rgba(255,255,255,0.04) 40%,transparent 60%);
-      animation:waterMove 12s linear infinite;
-      pointer-events:none;
-    }
-    @keyframes waterMove{
-      from{background-position:0 0}
-      to{background-position:1000px 0}
     }
 
     .app{
-      max-width:640px;
+      max-width:680px;
       margin:auto;
-      padding:28px 16px 40px;
-      animation:fadeIn .8s ease;
-    }
-    @keyframes fadeIn{
-      from{opacity:0;transform:translateY(10px)}
-      to{opacity:1;transform:none}
+      padding:26px 16px 40px;
     }
 
     h1{
       text-align:center;
       margin:0;
       font-size:1.9rem;
-      font-weight:800;
-      letter-spacing:0.6px;
-    }
-    .sub{
-      text-align:center;
-      color:var(--muted);
-      font-size:.9rem;
-      margin:6px 0 22px;
+      font-weight:900;
+      letter-spacing:1px;
+      color:var(--green);
     }
 
-    .glass{
-      background:var(--glass);
-      backdrop-filter:blur(28px) saturate(140%);
-      -webkit-backdrop-filter:blur(28px) saturate(140%);
-      border:1px solid var(--glass-border);
-      border-radius:22px;
+    .sub{
+      text-align:center;
+      margin:6px 0 24px;
+      font-size:.85rem;
+      color:var(--muted);
+    }
+
+    .panel{
+      background:var(--panel);
+      backdrop-filter:blur(14px);
+      border:1px solid var(--border);
+      border-radius:18px;
       padding:18px;
       margin-bottom:22px;
-      box-shadow:0 30px 60px rgba(0,0,0,.55);
-      transition:transform .25s ease;
+      box-shadow:0 0 40px rgba(0,255,120,0.12);
     }
-    .glass:active{transform:scale(.99)}
 
     label{
       display:block;
       margin-top:12px;
-      font-size:.78rem;
+      font-size:.75rem;
       color:var(--muted);
+      letter-spacing:.3px;
     }
 
     textarea,input,select{
       width:100%;
       margin-top:6px;
       padding:14px;
-      border-radius:18px;
-      background:rgba(255,255,255,0.03);
-      border:1px solid var(--glass-border);
-      color:var(--text);
+      border-radius:14px;
+      background:rgba(0,0,0,0.65);
+      border:1px solid var(--border);
+      color:var(--green);
       font-size:.95rem;
       outline:none;
-      transition:border .2s ease, box-shadow .2s ease;
     }
+
     textarea{min-height:96px;resize:vertical}
+
     textarea:focus,input:focus,select:focus{
-      border-color:var(--highlight);
-      box-shadow:0 0 0 2px rgba(125,211,252,.25);
+      box-shadow:0 0 0 2px rgba(0,255,120,0.25);
     }
 
     .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -114,43 +90,15 @@
       width:100%;
       padding:14px;
       border-radius:999px;
-      border:1px solid var(--glass-border);
-      background:rgba(255,255,255,0.05);
-      color:var(--text);
+      border:1px solid var(--border);
+      background:rgba(0,0,0,0.75);
+      color:var(--green);
       font-size:.9rem;
-      font-weight:600;
+      font-weight:700;
       cursor:pointer;
-      position:relative;
-      overflow:hidden;
-      transition:background .2s ease, transform .15s ease;
     }
-    .btn:hover{background:rgba(255,255,255,0.12)}
-    .btn:active{transform:scale(.97)}
 
-    /* ripple */
-    .btn::after{
-      content:'';
-      position:absolute;
-      inset:0;
-      background:radial-gradient(circle at var(--x,50%) var(--y,50%),rgba(255,255,255,.35),transparent 60%);
-      opacity:0;
-      transition:opacity .4s ease;
-    }
-    .btn:active::after{opacity:1}
-
-    /* loader bar */
-    .loader{
-      height:3px;
-      border-radius:3px;
-      background:linear-gradient(90deg,transparent,rgba(125,211,252,.8),transparent);
-      animation:load 1.2s infinite;
-      display:none;
-      margin-top:10px;
-    }
-    @keyframes load{
-      from{background-position:-200px}
-      to{background-position:200px}
-    }
+    .btn:hover{background:rgba(0,255,120,0.1)}
 
     .footer{
       text-align:center;
@@ -158,191 +106,122 @@
       color:var(--muted);
       margin-top:10px;
     }
-    .footer a{color:#7dd3fc;text-decoration:none}
+
+    .footer a{color:var(--green);text-decoration:none}
 
     @media(max-width:420px){
       .row,.row-3{grid-template-columns:1fr}
     }
-  </style>
-</head>
-
-<body>
-<div class="water"></div>
-
-<div class="app">
+  </style></head>
+<body><div class="app">
   <h1>Universal Crypto Tool</h1>
-  <div class="sub">Water-Glass UI · Encrypt · Analyze · Guess Keys</div>
-
-  <!-- MAIN -->
-  <div class="glass">
+  <div class="sub">Hacker UI · Green on Black · Clean & Fast</div>  <!-- MAIN -->  <div class="panel">
     <label>Encrypted / Plain Text</label>
-    <textarea id="inputText"></textarea>
-
-    <div class="row">
-      <div>
-        <label>Algorithm</label>
-        <select id="algorithm">
-          <option>AES</option>
-          <option>DES</option>
-          <option>TripleDES</option>
-        </select>
-      </div>
-      <div>
-        <label>Mode</label>
-        <select id="mode">
-          <option>CBC</option>
-          <option>CFB</option>
-          <option>ECB</option>
-          <option>OFB</option>
-        </select>
-      </div>
-    </div>
-
-    <label>Key / Passphrase</label>
-    <input id="key" placeholder="secret-key">
-
-    <label>IV (optional)</label>
-    <input id="iv">
-
-    <div class="row-3">
-      <button class="btn" onclick="withLoad(encryptText)">Encrypt</button>
-      <button class="btn" onclick="withLoad(decryptText)">Decrypt</button>
-      <button class="btn" onclick="withLoad(analyzeText)">Analyze</button>
-    </div>
-
-    <div class="loader" id="mainLoader"></div>
+    <textarea id="inputText"></textarea><div class="row">
+  <div>
+    <label>Algorithm</label>
+    <select id="algorithm">
+      <option>AES</option>
+      <option>DES</option>
+      <option>TripleDES</option>
+    </select>
   </div>
-
-  <!-- KEY GUESSER -->
-  <div class="glass">
-    <label>Contextual Key Guesser (CTF Mode)</label>
-    <textarea id="contextInput"></textarea>
-    <button class="btn" onclick="guessFlow()">Start Key Guessing</button>
-    <div class="loader" id="guessLoader"></div>
-  </div>
-
-  <!-- BASE64 -->
-  <div class="glass">
-    <label>Quick Base64 Tools</label>
-    <textarea id="b64Input"></textarea>
-    <div class="row">
-      <button class="btn" onclick="withLoad(encodeBase64)">Text → Base64</button>
-      <button class="btn" onclick="withLoad(decodeBase64)">Base64 → Text</button>
-    </div>
-  </div>
-
-  <!-- OUTPUT -->
-  <div class="glass">
-    <label>Output</label>
-    <textarea id="outputText"></textarea>
-    <button class="btn" onclick="copyOutput()">Copy</button>
-  </div>
-
-  <div class="footer">
-    Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v1.2.1
+  <div>
+    <label>Mode</label>
+    <select id="mode">
+      <option>CBC</option>
+      <option>CFB</option>
+      <option>ECB</option>
+      <option>OFB</option>
+    </select>
   </div>
 </div>
 
-<script>
-/* ripple coords */
-document.querySelectorAll('.btn').forEach(b=>{
-  b.addEventListener('pointerdown',e=>{
-    b.style.setProperty('--x',e.offsetX+'px');
-    b.style.setProperty('--y',e.offsetY+'px');
-  });
-});
+<label>Key / Passphrase</label>
+<input id="key" placeholder="secret-key">
 
-/* loader wrapper */
-function withLoad(fn){
-  const l=document.getElementById('mainLoader');
-  l.style.display='block';
-  setTimeout(()=>{fn();l.style.display='none'},500);
-}
+<label>IV (optional)</label>
+<input id="iv">
+
+<div class="row-3">
+  <button class="btn" onclick="runEncrypt()">Encrypt</button>
+  <button class="btn" onclick="runDecrypt()">Decrypt</button>
+  <button class="btn" onclick="runAnalyze()">Analyze</button>
+</div>
+
+  </div>  <!-- KEY GUESSER -->  <div class="panel">
+    <label>Contextual Key Guesser (CTF Mode)</label>
+    <textarea id="contextInput"></textarea>
+    <button class="btn" onclick="runGuess()">Try Contextual Keys</button>
+  </div>  <!-- BASE64 -->  <div class="panel">
+    <label>Quick Base64 Tools</label>
+    <textarea id="b64Input"></textarea>
+    <div class="row">
+      <button class="btn" onclick="runEncode()">Text → Base64</button>
+      <button class="btn" onclick="runDecode()">Base64 → Text</button>
+    </div>
+  </div>  <!-- OUTPUT -->  <div class="panel">
+    <label>Output</label>
+    <textarea id="outputText" readonly></textarea>
+    <button class="btn" onclick="copyOutput()">Copy</button>
+  </div>  <div class="footer">
+    Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v1.3.0
+  </div>
+</div><script>
+function clearOutput(){outputText.value=''}
 
 function getAlgo(a){return CryptoJS[a]}
 function getMode(m){return CryptoJS.mode[m]}
 
-function encryptText(){
-  const t=inputText.value,k=key.value;
-  if(!t||!k) return;
+function runEncrypt(){
+  clearOutput();
+  const t=inputText.value,k=key.value;if(!t||!k)return;
   const ivv=iv.value||CryptoJS.lib.WordArray.random(16);
-  const enc=getAlgo(algorithm.value).encrypt(t,k,{
-    iv:CryptoJS.enc.Utf8.parse(ivv.toString().slice(0,16)),
-    mode:getMode(mode.value),
-    padding:CryptoJS.pad.Pkcs7
-  });
+  const enc=getAlgo(algorithm.value).encrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(ivv.toString().slice(0,16)),mode:getMode(mode.value),padding:CryptoJS.pad.Pkcs7});
   outputText.value=enc.toString();
 }
 
-function decryptText(){
+function runDecrypt(){
+  clearOutput();
   try{
-    const t=inputText.value,k=key.value;
-    if(!t||!k) return;
+    const t=inputText.value,k=key.value;if(!t||!k)return;
     const ivv=iv.value||k.padEnd(16,'0');
-    const dec=getAlgo(algorithm.value).decrypt(t,k,{
-      iv:CryptoJS.enc.Utf8.parse(ivv.slice(0,16)),
-      mode:getMode(mode.value),
-      padding:CryptoJS.pad.Pkcs7
-    });
+    const dec=getAlgo(algorithm.value).decrypt(t,k,{iv:CryptoJS.enc.Utf8.parse(ivv.slice(0,16)),mode:getMode(mode.value),padding:CryptoJS.pad.Pkcs7});
     outputText.value=dec.toString(CryptoJS.enc.Utf8);
   }catch{}
 }
 
-function analyzeText(){
-  const t=inputText.value.trim();
-  let r=[];
-  if(/^[A-Za-z0-9+/=\s]+$/.test(t)) r.push('Base64-like data');
-  if(t.length>20) r.push('High entropy (encrypted)');
-  outputText.value=r.join('\n')||'No obvious pattern detected';
+function runAnalyze(){
+  clearOutput();
+  const t=inputText.value.trim();let r=[];
+  if(/^[A-Za-z0-9+/=\s]+$/.test(t)) r.push('[+] Base64-like data');
+  if(t.length>20) r.push('[+] High entropy (encrypted)');
+  outputText.value=r.join('\n')||'[!] No obvious pattern detected';
 }
 
-/* key guessing */
 let keys=[];
-function guessFlow(){
-  const loader=document.getElementById('guessLoader');
-  loader.style.display='block';
-  setTimeout(()=>{
-    const txt=contextInput.value.toLowerCase();
-    const words=txt.match(/[a-z]{4,}/g)||[];
-    const freq={};
-    words.forEach(w=>freq[w]=(freq[w]||0)+1);
-    keys=Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,10);
-    tryKeys();
-    loader.style.display='none';
-  },900);
-}
-
-function tryKeys(){
-  const c=inputText.value;
+function runGuess(){
+  clearOutput();
+  const txt=contextInput.value.toLowerCase();
+  const words=txt.match(/[a-z]{4,}/g)||[];
+  const freq={};words.forEach(w=>freq[w]=(freq[w]||0)+1);
+  keys=Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,10);
+  const cipher=inputText.value;
   for(const k of keys){
     try{
-      const d=CryptoJS.AES.decrypt(c,k).toString(CryptoJS.enc.Utf8);
-      if(d && /[a-z]/i.test(d)){
-        outputText.value='Possible key: '+k+'\n\n'+d;
+      const d=CryptoJS.AES.decrypt(cipher,k).toString(CryptoJS.enc.Utf8);
+      if(d&&/[a-z]/i.test(d)){
+        outputText.value='[+] Possible key: '+k+'\n\n'+d;
         return;
       }
     }catch{}
   }
-  outputText.value='No key matched';
+  outputText.value='[-] No key matched';
 }
 
-/* base64 */
-function encodeBase64(){
-  outputText.value=CryptoJS.enc.Base64.stringify(
-    CryptoJS.enc.Utf8.parse(b64Input.value)
-  );
-}
-function decodeBase64(){
-  try{
-    outputText.value=CryptoJS.enc.Utf8.stringify(
-      CryptoJS.enc.Base64.parse(b64Input.value)
-    );
-  }catch{}
-}
+function runEncode(){clearOutput();outputText.value=CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(b64Input.value))}
+function runDecode(){clearOutput();try{outputText.value=CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(b64Input.value))}catch{}}
 
-function copyOutput(){
-  navigator.clipboard.writeText(outputText.value);
-}
-</script>
-</body>
+function copyOutput(){navigator.clipboard.writeText(outputText.value)}
+</script></body>
 </html>
