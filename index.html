@@ -3,62 +3,122 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Encryption Decryption Tool · Event Stable v1.3.1</title>
+<title>Encryption Helper · Event Stable v1.3.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <style>
 :root{
-  --bg:#020403;--panel:#03160c;
-  --border:rgba(0,255,120,.35);
-  --green:#00ff88;--text:#eafff4;--muted:#7fa99a;
+  --bg:#050000;
+  --panel:#120202;
+  --border:rgba(255,80,40,.35);
+  --accent:#ff5a2a;
+  --text:#fff2ec;
+  --muted:#cfa99a;
   --warn:#ffb000;
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:JetBrains Mono,monospace;background:var(--bg);color:var(--text)}
-.app{max-width:960px;margin:auto;padding:22px 14px 36px}
-h1{text-align:center;margin:0;color:var(--green)}
-.sub{text-align:center;color:var(--muted)}
-.tabs,.bar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
-.tab,.btn,.pill{
-  padding:9px 16px;border-radius:999px;
-  border:1px solid var(--border);
-  background:#000;color:var(--green);
-  cursor:pointer;font-weight:700
+body{
+  margin:0;
+  font-family:JetBrains Mono,monospace;
+  background:var(--bg);
+  color:var(--text)
 }
-.tab.active{background:rgba(0,255,120,.15)}
-.panel{display:none;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
+.app{max-width:960px;margin:auto;padding:22px 14px 36px}
+h1{
+  text-align:center;
+  margin:0;
+  color:var(--accent);
+  text-shadow:0 0 18px rgba(255,90,42,.35)
+}
+.sub{text-align:center;color:var(--muted)}
+.tabs,.bar{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin:12px 0
+}
+.tab,.btn,.pill{
+  padding:9px 16px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:#000;
+  color:var(--accent);
+  cursor:pointer;
+  font-weight:700
+}
+.tab.active{background:rgba(255,90,42,.15)}
+.btn:hover,.tab:hover,.pill:hover{
+  box-shadow:0 0 12px rgba(255,90,42,.35)
+}
+.panel{
+  display:none;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px
+}
 .panel.active{display:block}
-label{font-size:.75rem;color:var(--muted);margin-top:10px;display:block}
+label{
+  font-size:.75rem;
+  color:var(--muted);
+  margin-top:10px;
+  display:block
+}
 textarea,input,select{
-  width:100%;margin-top:6px;padding:10px;border-radius:12px;
-  background:#000;border:1px solid var(--border);color:var(--green)
+  width:100%;
+  margin-top:6px;
+  padding:10px;
+  border-radius:12px;
+  background:#000;
+  border:1px solid var(--border);
+  color:var(--accent)
 }
 textarea{min-height:90px}
+textarea:focus,input:focus,select:focus{
+  outline:none;
+  box-shadow:0 0 10px rgba(255,90,42,.4)
+}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .small{font-size:.7rem;color:var(--muted)}
 .warn{color:var(--warn)}
-.footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:14px}
-.footer a{color:var(--green);text-decoration:none;font-weight:700}
+.footer{
+  text-align:center;
+  color:var(--muted);
+  font-size:.75rem;
+  margin-top:20px;
+  border:none
+}
+.footer a{
+  color:var(--accent);
+  text-decoration:none;
+  font-weight:700
+}
 </style>
 </head>
 
 <body>
 <div class="app">
-<h1>ENCRYPTION DECRYPTION HELPER</h1>
-<div class="sub">ANALYSE DECRYPT ENCRYPT</div>
+
+<h1>ENCRYPTION HELPER</h1>
+<div class="sub">Event Cryptography Toolkit · v1.3.1</div>
 
 <div class="bar">
   <button class="pill" id="ivDet" onclick="toggleDetIV()">Deterministic IV: OFF</button>
 </div>
 
+<div class="small" style="text-align:center">
+Client-side only · No data leaves your browser
+</div>
+
 <div class="tabs">
   <button class="tab active" onclick="showTab(event,'enc')">Encrypt / Decrypt</button>
-  <button class="tab" onclick="showTab(event,'guess')">Key Guesser</button>
+  <button class="tab" onclick="showTab(event,'guess')">Context Key Tester</button>
   <button class="tab" onclick="showTab(event,'b64')">Base64 / HEX</button>
   <button class="tab" onclick="showTab(event,'an')">Analyze</button>
 </div>
 
-<!-- Encrypt / Decrypt (UNCHANGED v1.3) -->
+<!-- Encrypt / Decrypt -->
 <div id="enc" class="panel active">
 <label>Action</label>
 <select id="encAction">
@@ -71,7 +131,7 @@ textarea{min-height:90px}
 
 <div class="row">
   <select id="encAlgo" onchange="onAlgoChange()"></select>
-  <select id="encMode" onchange="handleECB()"></select>
+  <select id="encMode"></select>
 </div>
 
 <div class="small warn" id="algoWarn"></div>
@@ -85,17 +145,16 @@ textarea{min-height:90px}
 <button class="btn" onclick="copyText('encOutput')">📋 Copy</button>
 </div>
 
-<!-- Key Guesser (UPGRADED ONLY) -->
+<!-- Key Guesser -->
 <div id="guess" class="panel">
 <label>Ciphertext</label>
 <textarea id="guessCipher"></textarea>
 
-<label>Event Text / Article (used to extract possible keys)</label>
-<textarea id="keySource" placeholder="Paste event announcement, rules, article, etc."></textarea>
+<label>Event Text / Article</label>
+<textarea id="keySource" placeholder="Paste announcement, rules, blog, etc."></textarea>
 
 <div class="small warn">
-Context-based guessing · max 50 keys · non-bruteforce<br>
-Assumes AES-CBC (common in events)
+Context-based guessing · max 50 keys · AES-CBC
 </div>
 
 <button class="btn" onclick="tryContextKeys()">⚡ Extract & Try Keys</button>
@@ -118,16 +177,15 @@ Assumes AES-CBC (common in events)
 </div>
 
 <div class="footer">
-Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v1.3.1
+Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a>
 </div>
+
 </div>
 
 <script>
-/* ===== CONFIG ===== */
 const ALGO_INFO={AES:{block:16},DES:{block:8},TripleDES:{block:8}};
 let DET_IV=false;
 
-/* ===== UI ===== */
 function toggleDetIV(){
   DET_IV=!DET_IV;
   ivDet.textContent='Deterministic IV: '+(DET_IV?'ON':'OFF');
@@ -144,12 +202,10 @@ function populate(){
   encAlgo.value='AES';
 }
 populate();
+
 function onAlgoChange(){
   algoWarn.textContent=encAlgo.value==='AES'?'':'⚠️ Advanced / non-event algorithm';
 }
-function handleECB(){}
-
-/* ===== HELPERS ===== */
 function normalizeBase64(s){
   return s.replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
 }
@@ -176,22 +232,15 @@ function autoParseInput(input,algo){
     const wa=CryptoJS.enc.Base64.parse(normalizeBase64(input));
     const hex=CryptoJS.enc.Hex.stringify(wa);
     if(hex.length>block){
-      return {
-        iv:CryptoJS.enc.Hex.parse(hex.slice(0,block)),
-        data:CryptoJS.enc.Hex.parse(hex.slice(block))
-      };
+      return {iv:CryptoJS.enc.Hex.parse(hex.slice(0,block)),data:CryptoJS.enc.Hex.parse(hex.slice(block))};
     }
   }
   if(/^[0-9a-fA-F]+$/.test(input)){
-    return {
-      iv:CryptoJS.enc.Hex.parse(input.slice(0,block)),
-      data:CryptoJS.enc.Hex.parse(input.slice(block))
-    };
+    return {iv:CryptoJS.enc.Hex.parse(input.slice(0,block)),data:CryptoJS.enc.Hex.parse(input.slice(block))};
   }
   return null;
 }
 
-/* ===== CORE (UNCHANGED v1.3) ===== */
 function realtime(){
   encOutput.value='';
   confidence.textContent='';
@@ -200,7 +249,6 @@ function realtime(){
   const algo=encAlgo.value;
   const mode=CryptoJS.mode[encMode.value];
   if(!t||!k)return;
-
   try{
     const keyWA=keyToWA(k,algo);
     if(encAction.value==='encrypt'){
@@ -226,53 +274,36 @@ function realtime(){
 ['encInput','encKey','encAction','encAlgo','encMode']
 .forEach(id=>document.getElementById(id).addEventListener('input',realtime));
 
-/* ===== Key Guesser (FIXED) ===== */
 function extractKeys(text){
   const STOP=['this','that','with','from','your','have','will','welcome','there','their'];
   return [...new Set(
-    text.toLowerCase()
-      .replace(/[^a-z0-9\s]/g,'')
-      .split(/\s+/)
-      .filter(w=>w.length>=4 && w.length<=16 && !/^\d+$/.test(w) && !STOP.includes(w))
+    text.toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/)
+      .filter(w=>w.length>=4&&w.length<=16&&!/^\d+$/.test(w)&&!STOP.includes(w))
   )].slice(0,50);
 }
-
 function tryContextKeys(){
-  if(!guessCipher.value.trim()){
-    guessOutput.value='[!] Please paste ciphertext';
-    return;
-  }
-  if(!keySource.value.trim()){
-    guessOutput.value='[!] Please paste event text to extract possible keys';
-    return;
-  }
-
+  if(!guessCipher.value.trim()){guessOutput.value='[!] Paste ciphertext';return;}
+  if(!keySource.value.trim()){guessOutput.value='[!] Paste event text';return;}
   const parsed=autoParseInput(guessCipher.value,'AES');
-  if(!parsed){
-    guessOutput.value='[!] Unsupported ciphertext format';
-    return;
-  }
-
+  if(!parsed){guessOutput.value='[!] Unsupported ciphertext format';return;}
   let out='';
   extractKeys(keySource.value).forEach(k=>{
     try{
-      const keyWA=keyToWA(k,'AES');
       const d=CryptoJS.AES.decrypt(
         {ciphertext:parsed.data},
-        keyWA,
+        keyToWA(k,'AES'),
         {iv:parsed.iv,mode:CryptoJS.mode.CBC,padding:CryptoJS.pad.Pkcs7}
       ).toString(CryptoJS.enc.Utf8);
       if(d&&englishScore(d)>=75) out+=`✔ ${k}\n${d}\n\n`;
     }catch{}
   });
-  guessOutput.value=out||'✖ No keys matched from provided text';
+  guessOutput.value=out||'✖ No keys matched';
 }
-
-/* ===== UTIL ===== */
 function unwrapBase64(){
   try{
-    const wa=CryptoJS.enc.Base64.parse(normalizeBase64(b64Input.value));
-    b64Output.value=CryptoJS.enc.Hex.stringify(wa);
+    b64Output.value=CryptoJS.enc.Hex.stringify(
+      CryptoJS.enc.Base64.parse(normalizeBase64(b64Input.value))
+    );
   }catch{b64Output.value='[!] Invalid Base64'}
 }
 function analyzeInput(){
