@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Encryption Decryption Tool · Event Stable v1.3</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Encryption Decryption Tool · Event Stable v1.3.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <style>
@@ -45,7 +45,7 @@ textarea{min-height:90px}
 <body>
 <div class="app">
 <h1>ENCRYPTION DECRYPTION HELPER</h1>
-<div class="sub">EVENT · FINAL · STABLE</div>
+<div class="sub">ANALYSE DECRYPT ENCRYPT</div>
 
 <div class="bar">
   <button class="pill" id="ivDet" onclick="toggleDetIV()">Deterministic IV: OFF</button>
@@ -58,7 +58,7 @@ textarea{min-height:90px}
   <button class="tab" onclick="showTab(event,'an')">Analyze</button>
 </div>
 
-<!-- Encrypt / Decrypt -->
+<!-- Encrypt / Decrypt (UNCHANGED v1.3) -->
 <div id="enc" class="panel active">
 <label>Action</label>
 <select id="encAction">
@@ -79,19 +79,26 @@ textarea{min-height:90px}
 <label>Key</label>
 <input id="encKey">
 
-<label><input type="checkbox" id="rawHex"> Cipher is RAW (HEX)</label>
-
 <label>Output</label>
 <textarea id="encOutput" readonly></textarea>
 <div class="small" id="confidence"></div>
 <button class="btn" onclick="copyText('encOutput')">📋 Copy</button>
 </div>
 
-<!-- Key Guesser -->
+<!-- Key Guesser (UPGRADED ONLY) -->
 <div id="guess" class="panel">
 <label>Ciphertext</label>
 <textarea id="guessCipher"></textarea>
-<button class="btn" onclick="tryCommonKeys()">⚡ Try Common Event Keys</button>
+
+<label>Event Text / Article (used to extract possible keys)</label>
+<textarea id="keySource" placeholder="Paste event announcement, rules, article, etc."></textarea>
+
+<div class="small warn">
+Context-based guessing · max 50 keys · non-bruteforce<br>
+Assumes AES-CBC (common in events)
+</div>
+
+<button class="btn" onclick="tryContextKeys()">⚡ Extract & Try Keys</button>
 <textarea id="guessOutput" readonly></textarea>
 </div>
 
@@ -111,18 +118,13 @@ textarea{min-height:90px}
 </div>
 
 <div class="footer">
-Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v1.3 FINAL
+Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v1.3.1
 </div>
 </div>
 
 <script>
 /* ===== CONFIG ===== */
-const ALGO_INFO={
-  AES:{block:16},
-  DES:{block:8},
-  TripleDES:{block:8}
-};
-
+const ALGO_INFO={AES:{block:16},DES:{block:8},TripleDES:{block:8}};
 let DET_IV=false;
 
 /* ===== UI ===== */
@@ -166,12 +168,10 @@ function parseCipherPart(s){
 }
 function autoParseInput(input,algo){
   const block=ALGO_INFO[algo].block*2;
-
   if(input.includes(':')){
     const [ivHex,c]=input.split(':');
     return {iv:CryptoJS.enc.Hex.parse(ivHex),data:parseCipherPart(c)};
   }
-
   if(/^[A-Za-z0-9+/=_-]+$/.test(input)){
     const wa=CryptoJS.enc.Base64.parse(normalizeBase64(input));
     const hex=CryptoJS.enc.Hex.stringify(wa);
@@ -182,7 +182,6 @@ function autoParseInput(input,algo){
       };
     }
   }
-
   if(/^[0-9a-fA-F]+$/.test(input)){
     return {
       iv:CryptoJS.enc.Hex.parse(input.slice(0,block)),
@@ -192,7 +191,7 @@ function autoParseInput(input,algo){
   return null;
 }
 
-/* ===== CORE ===== */
+/* ===== CORE (UNCHANGED v1.3) ===== */
 function realtime(){
   encOutput.value='';
   confidence.textContent='';
@@ -204,49 +203,59 @@ function realtime(){
 
   try{
     const keyWA=keyToWA(k,algo);
-
     if(encAction.value==='encrypt'){
       const iv=DET_IV
         ? CryptoJS.enc.Hex.parse(keyWA.toString().slice(0,ALGO_INFO[algo].block*2))
         : CryptoJS.lib.WordArray.random(ALGO_INFO[algo].block);
-
       const out=CryptoJS[algo].encrypt(t,keyWA,{iv,mode,padding:CryptoJS.pad.Pkcs7});
       encOutput.value=iv.toString(CryptoJS.enc.Hex)+':'+out.toString();
       return;
     }
-
     const parsed=autoParseInput(t,algo);
-    if(!parsed){
-      encOutput.value='[!] Unsupported input format';
-      return;
-    }
-
+    if(!parsed){encOutput.value='[!] Unsupported input format';return;}
     const out=CryptoJS[algo].decrypt(
       {ciphertext:parsed.data},
       keyWA,
       {iv:parsed.iv,mode,padding:CryptoJS.pad.Pkcs7}
     ).toString(CryptoJS.enc.Utf8);
-
     encOutput.value=out||'[!] Decryption failed';
     const s=englishScore(out);
-    confidence.textContent=s>=75
-      ? `✅ English confidence: ${s}%`
-      : `⚠️ Low confidence: ${s}%`;
-
-  }catch{
-    encOutput.value='[!] Decryption failed';
-  }
+    confidence.textContent=s>=75?`✅ English confidence: ${s}%`:`⚠️ Low confidence: ${s}%`;
+  }catch{encOutput.value='[!] Decryption failed'}
 }
-
-['encInput','encKey','encAction','encAlgo','encMode','rawHex']
+['encInput','encKey','encAction','encAlgo','encMode']
 .forEach(id=>document.getElementById(id).addEventListener('input',realtime));
 
-function tryCommonKeys(){
+/* ===== Key Guesser (FIXED) ===== */
+function extractKeys(text){
+  const STOP=['this','that','with','from','your','have','will','welcome','there','their'];
+  return [...new Set(
+    text.toLowerCase()
+      .replace(/[^a-z0-9\s]/g,'')
+      .split(/\s+/)
+      .filter(w=>w.length>=4 && w.length<=16 && !/^\d+$/.test(w) && !STOP.includes(w))
+  )].slice(0,50);
+}
+
+function tryContextKeys(){
+  if(!guessCipher.value.trim()){
+    guessOutput.value='[!] Please paste ciphertext';
+    return;
+  }
+  if(!keySource.value.trim()){
+    guessOutput.value='[!] Please paste event text to extract possible keys';
+    return;
+  }
+
+  const parsed=autoParseInput(guessCipher.value,'AES');
+  if(!parsed){
+    guessOutput.value='[!] Unsupported ciphertext format';
+    return;
+  }
+
   let out='';
-  const keys=['fluton','encrypted','event','flutonevent','testnet'];
-  keys.forEach(k=>{
+  extractKeys(keySource.value).forEach(k=>{
     try{
-      const parsed=autoParseInput(guessCipher.value,'AES');
       const keyWA=keyToWA(k,'AES');
       const d=CryptoJS.AES.decrypt(
         {ciphertext:parsed.data},
@@ -256,18 +265,16 @@ function tryCommonKeys(){
       if(d&&englishScore(d)>=75) out+=`✔ ${k}\n${d}\n\n`;
     }catch{}
   });
-  guessOutput.value=out||'✖ No common keys matched';
+  guessOutput.value=out||'✖ No keys matched from provided text';
 }
 
+/* ===== UTIL ===== */
 function unwrapBase64(){
   try{
     const wa=CryptoJS.enc.Base64.parse(normalizeBase64(b64Input.value));
     b64Output.value=CryptoJS.enc.Hex.stringify(wa);
-  }catch{
-    b64Output.value='[!] Invalid Base64';
-  }
+  }catch{b64Output.value='[!] Invalid Base64'}
 }
-
 function analyzeInput(){
   const t=anInput.value.trim();
   let r=[];
@@ -278,7 +285,6 @@ function analyzeInput(){
   anOutput.value=r.join('\n');
 }
 anInput.addEventListener('input',analyzeInput);
-
 function copyText(id){
   navigator.clipboard.writeText(document.getElementById(id).value||'');
 }
