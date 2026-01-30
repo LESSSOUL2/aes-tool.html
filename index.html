@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Encryption Decryption Tool · Event Stable v1.1</title>
+<title>Encryption Decryption Tool · Event Stable v1.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <style>
@@ -118,16 +118,16 @@ textarea{min-height:90px}
 </div>
 
 <div class="footer">
-Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · Event Stable v1.1
+Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · Event Stable v1.2
 </div>
 </div>
 
 <script>
-/* ===== Algorithm metadata (CRITICAL) ===== */
+/* ===== Algorithm metadata ===== */
 const ALGO_INFO = {
-  AES: { block:16 },
-  DES: { block:8 },
-  TripleDES: { block:8 }
+  AES:{block:16},
+  DES:{block:8},
+  TripleDES:{block:8}
 };
 
 let DET_IV=false;
@@ -144,7 +144,6 @@ function showTab(e,id){
   e.target.classList.add('active');
 }
 
-/* Populate algorithms & modes */
 function populate(){
   Object.keys(ALGO_INFO).forEach(a=>encAlgo.add(new Option(a,a)));
   ['CBC','CFB','ECB','OFB'].forEach(m=>encMode.add(new Option(m,m)));
@@ -153,10 +152,8 @@ function populate(){
 populate();
 
 function onAlgoChange(){
-  const a=encAlgo.value;
-  algoWarn.textContent = a==='AES'
-    ? ''
-    : '⚠️ Advanced / non-event algorithm (AES recommended)';
+  algoWarn.textContent =
+    encAlgo.value==='AES' ? '' : '⚠️ Advanced / non-event algorithm';
 }
 
 function handleECB(){
@@ -168,11 +165,25 @@ function normalizeBase64(s){
   return s.replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
 }
 
+function parseCipherPart(input){
+  const clean = normalizeBase64(input);
+  return /^[0-9a-fA-F]+$/.test(clean)
+    ? CryptoJS.enc.Hex.parse(clean)
+    : CryptoJS.enc.Base64.parse(clean);
+}
+
 function englishScore(t){
   return Math.round(((t.match(/[a-zA-Z ]/g)||[]).length/Math.max(1,t.length))*100);
 }
 
-function aesDecrypt(dataWA,key,iv,mode,algo){
+function genIV(key,algo){
+  const size=ALGO_INFO[algo].block;
+  return DET_IV
+    ? CryptoJS.enc.Utf8.parse(key.padEnd(size,'0').slice(0,size))
+    : CryptoJS.lib.WordArray.random(size);
+}
+
+function decryptWA(dataWA,key,iv,algo,mode){
   return CryptoJS[algo].decrypt(
     {ciphertext:dataWA},
     key,
@@ -180,49 +191,40 @@ function aesDecrypt(dataWA,key,iv,mode,algo){
   ).toString(CryptoJS.enc.Utf8);
 }
 
-function genIV(key,algo){
-  const size = ALGO_INFO[algo].block;
-  return DET_IV
-    ? CryptoJS.enc.Utf8.parse(key.padEnd(size,'0').slice(0,size))
-    : CryptoJS.lib.WordArray.random(size);
-}
-
 function realtime(){
   encOutput.value='';
   confidence.textContent='';
-  const text=encInput.value.trim();
-  const key=encKey.value;
+  const t=encInput.value.trim();
+  const k=encKey.value;
   const algo=encAlgo.value;
   const mode=CryptoJS.mode[encMode.value];
-  if(!text||!key) return;
+  if(!t||!k) return;
 
   try{
     if(encAction.value==='encrypt'){
-      const iv=genIV(key,algo);
-      const out=CryptoJS[algo].encrypt(text,key,{iv,mode});
+      const iv=genIV(k,algo);
+      const out=CryptoJS[algo].encrypt(t,k,{iv,mode});
       encOutput.value=iv.toString(CryptoJS.enc.Hex)+':'+out.toString();
       return;
     }
 
-    const block=ALGO_INFO[algo].block*2;
     let iv,data;
+    const block=ALGO_INFO[algo].block*2;
 
     if(rawHex.checked){
-      iv=CryptoJS.enc.Hex.parse(text.slice(0,block));
-      data=CryptoJS.enc.Hex.parse(text.slice(block));
+      iv=CryptoJS.enc.Hex.parse(t.slice(0,block));
+      data=CryptoJS.enc.Hex.parse(t.slice(block));
     }else{
-      const p=text.split(':');
+      const p=t.split(':');
       iv=CryptoJS.enc.Hex.parse(p[0]);
-      data=CryptoJS.enc.Base64.parse(normalizeBase64(p[1]));
+      data=parseCipherPart(p[1]);
     }
 
-    const out=aesDecrypt(data,key,iv,mode,algo);
+    const out=decryptWA(data,k,iv,algo,mode);
     encOutput.value=out||'[!] Decryption failed';
     const s=englishScore(out);
-    confidence.textContent=s>=75
-      ? `✅ English confidence: ${s}%`
-      : `⚠️ Low confidence: ${s}%`;
-
+    confidence.textContent =
+      s>=75 ? `✅ English confidence: ${s}%` : `⚠️ Low confidence: ${s}%`;
   }catch{
     encOutput.value='[!] Decryption failed';
   }
@@ -242,8 +244,8 @@ function tryCommonKeys(){
     try{
       const p=guessCipher.value.split(':');
       const iv=CryptoJS.enc.Hex.parse(p[0]);
-      const data=CryptoJS.enc.Base64.parse(normalizeBase64(p[1]));
-      const d=aesDecrypt(data,k,iv,CryptoJS.mode.CBC,'AES');
+      const data=parseCipherPart(p[1]);
+      const d=decryptWA(data,k,iv,'AES',CryptoJS.mode.CBC);
       if(d && englishScore(d)>=75){
         out+=`✔ ${k}\n${d}\n\n`;
       }
