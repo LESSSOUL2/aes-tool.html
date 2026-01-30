@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Encryption Decryption Tool · Event Stable v1.2</title>
+<title>Encryption Decryption Tool · Event Stable v1.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <style>
@@ -17,7 +17,7 @@
 body{margin:0;font-family:JetBrains Mono,monospace;background:var(--bg);color:var(--text)}
 .app{max-width:960px;margin:auto;padding:22px 14px 36px}
 h1{text-align:center;margin:0;color:var(--green)}
-.sub{text-align:center;color:var(--muted);margin-bottom:8px}
+.sub{text-align:center;color:var(--muted)}
 .tabs,.bar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
 .tab,.btn,.pill{
   padding:9px 16px;border-radius:999px;
@@ -39,14 +39,13 @@ textarea{min-height:90px}
 .warn{color:var(--warn)}
 .footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:14px}
 .footer a{color:var(--green);text-decoration:none;font-weight:700}
-.footer a:hover{text-decoration:underline}
 </style>
 </head>
 
 <body>
 <div class="app">
 <h1>ENCRYPTION DECRYPTION HELPER</h1>
-<div class="sub">EVENT · MULTI-ALGO · STABLE</div>
+<div class="sub">EVENT · FINAL · STABLE</div>
 
 <div class="bar">
   <button class="pill" id="ivDet" onclick="toggleDetIV()">Deterministic IV: OFF</button>
@@ -82,30 +81,25 @@ textarea{min-height:90px}
 
 <label><input type="checkbox" id="rawHex"> Cipher is RAW (HEX)</label>
 
-<label>IV (optional)</label>
-<input id="encIV">
-
 <label>Output</label>
 <textarea id="encOutput" readonly></textarea>
 <div class="small" id="confidence"></div>
-<button class="btn" onclick="copyText('encOutput')">📋 Copy Output</button>
+<button class="btn" onclick="copyText('encOutput')">📋 Copy</button>
 </div>
 
 <!-- Key Guesser -->
 <div id="guess" class="panel">
-<label>Ciphertext (IV:DATA)</label>
+<label>Ciphertext</label>
 <textarea id="guessCipher"></textarea>
 <button class="btn" onclick="tryCommonKeys()">⚡ Try Common Event Keys</button>
-<label>Result</label>
 <textarea id="guessOutput" readonly></textarea>
 </div>
 
-<!-- Base64 / HEX -->
+<!-- Base64 -->
 <div id="b64" class="panel">
 <label>Input</label>
 <textarea id="b64Input"></textarea>
 <button class="btn" onclick="unwrapBase64()">Base64 → RAW (HEX)</button>
-<label>Output</label>
 <textarea id="b64Output" readonly></textarea>
 </div>
 
@@ -113,18 +107,17 @@ textarea{min-height:90px}
 <div id="an" class="panel">
 <label>Input</label>
 <textarea id="anInput"></textarea>
-<label>Analysis</label>
 <textarea id="anOutput" readonly></textarea>
 </div>
 
 <div class="footer">
-Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · Event Stable v1.2
+Built by <a href="https://x.com/L3SSSOUL" target="_blank">@L3SSSOUL</a> · v1.3 FINAL
 </div>
 </div>
 
 <script>
-/* ===== Algorithm metadata ===== */
-const ALGO_INFO = {
+/* ===== CONFIG ===== */
+const ALGO_INFO={
   AES:{block:16},
   DES:{block:8},
   TripleDES:{block:8}
@@ -132,65 +125,74 @@ const ALGO_INFO = {
 
 let DET_IV=false;
 
+/* ===== UI ===== */
 function toggleDetIV(){
   DET_IV=!DET_IV;
   ivDet.textContent='Deterministic IV: '+(DET_IV?'ON':'OFF');
 }
-
 function showTab(e,id){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   e.target.classList.add('active');
 }
-
 function populate(){
   Object.keys(ALGO_INFO).forEach(a=>encAlgo.add(new Option(a,a)));
   ['CBC','CFB','ECB','OFB'].forEach(m=>encMode.add(new Option(m,m)));
   encAlgo.value='AES';
 }
 populate();
-
 function onAlgoChange(){
-  algoWarn.textContent =
-    encAlgo.value==='AES' ? '' : '⚠️ Advanced / non-event algorithm';
+  algoWarn.textContent=encAlgo.value==='AES'?'':'⚠️ Advanced / non-event algorithm';
 }
+function handleECB(){}
 
-function handleECB(){
-  encIV.disabled = encMode.value==='ECB';
-  if(encMode.value==='ECB') encIV.value='';
-}
-
+/* ===== HELPERS ===== */
 function normalizeBase64(s){
   return s.replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
 }
-
-function parseCipherPart(input){
-  const clean = normalizeBase64(input);
-  return /^[0-9a-fA-F]+$/.test(clean)
-    ? CryptoJS.enc.Hex.parse(clean)
-    : CryptoJS.enc.Base64.parse(clean);
+function keyToWA(key,algo){
+  const size=ALGO_INFO[algo].block;
+  return CryptoJS.enc.Utf8.parse(key.padEnd(size,'0').slice(0,size));
 }
-
 function englishScore(t){
   return Math.round(((t.match(/[a-zA-Z ]/g)||[]).length/Math.max(1,t.length))*100);
 }
+function parseCipherPart(s){
+  const c=normalizeBase64(s);
+  return /^[0-9a-fA-F]+$/.test(c)
+    ? CryptoJS.enc.Hex.parse(c)
+    : CryptoJS.enc.Base64.parse(c);
+}
+function autoParseInput(input,algo){
+  const block=ALGO_INFO[algo].block*2;
 
-function genIV(key,algo){
-  const size=ALGO_INFO[algo].block;
-  return DET_IV
-    ? CryptoJS.enc.Utf8.parse(key.padEnd(size,'0').slice(0,size))
-    : CryptoJS.lib.WordArray.random(size);
+  if(input.includes(':')){
+    const [ivHex,c]=input.split(':');
+    return {iv:CryptoJS.enc.Hex.parse(ivHex),data:parseCipherPart(c)};
+  }
+
+  if(/^[A-Za-z0-9+/=_-]+$/.test(input)){
+    const wa=CryptoJS.enc.Base64.parse(normalizeBase64(input));
+    const hex=CryptoJS.enc.Hex.stringify(wa);
+    if(hex.length>block){
+      return {
+        iv:CryptoJS.enc.Hex.parse(hex.slice(0,block)),
+        data:CryptoJS.enc.Hex.parse(hex.slice(block))
+      };
+    }
+  }
+
+  if(/^[0-9a-fA-F]+$/.test(input)){
+    return {
+      iv:CryptoJS.enc.Hex.parse(input.slice(0,block)),
+      data:CryptoJS.enc.Hex.parse(input.slice(block))
+    };
+  }
+  return null;
 }
 
-function decryptWA(dataWA,key,iv,algo,mode){
-  return CryptoJS[algo].decrypt(
-    {ciphertext:dataWA},
-    key,
-    {iv,mode,padding:CryptoJS.pad.Pkcs7}
-  ).toString(CryptoJS.enc.Utf8);
-}
-
+/* ===== CORE ===== */
 function realtime(){
   encOutput.value='';
   confidence.textContent='';
@@ -198,57 +200,60 @@ function realtime(){
   const k=encKey.value;
   const algo=encAlgo.value;
   const mode=CryptoJS.mode[encMode.value];
-  if(!t||!k) return;
+  if(!t||!k)return;
 
   try{
+    const keyWA=keyToWA(k,algo);
+
     if(encAction.value==='encrypt'){
-      const iv=genIV(k,algo);
-      const out=CryptoJS[algo].encrypt(t,k,{iv,mode});
+      const iv=DET_IV
+        ? CryptoJS.enc.Hex.parse(keyWA.toString().slice(0,ALGO_INFO[algo].block*2))
+        : CryptoJS.lib.WordArray.random(ALGO_INFO[algo].block);
+
+      const out=CryptoJS[algo].encrypt(t,keyWA,{iv,mode,padding:CryptoJS.pad.Pkcs7});
       encOutput.value=iv.toString(CryptoJS.enc.Hex)+':'+out.toString();
       return;
     }
 
-    let iv,data;
-    const block=ALGO_INFO[algo].block*2;
-
-    if(rawHex.checked){
-      iv=CryptoJS.enc.Hex.parse(t.slice(0,block));
-      data=CryptoJS.enc.Hex.parse(t.slice(block));
-    }else{
-      const p=t.split(':');
-      iv=CryptoJS.enc.Hex.parse(p[0]);
-      data=parseCipherPart(p[1]);
+    const parsed=autoParseInput(t,algo);
+    if(!parsed){
+      encOutput.value='[!] Unsupported input format';
+      return;
     }
 
-    const out=decryptWA(data,k,iv,algo,mode);
+    const out=CryptoJS[algo].decrypt(
+      {ciphertext:parsed.data},
+      keyWA,
+      {iv:parsed.iv,mode,padding:CryptoJS.pad.Pkcs7}
+    ).toString(CryptoJS.enc.Utf8);
+
     encOutput.value=out||'[!] Decryption failed';
     const s=englishScore(out);
-    confidence.textContent =
-      s>=75 ? `✅ English confidence: ${s}%` : `⚠️ Low confidence: ${s}%`;
+    confidence.textContent=s>=75
+      ? `✅ English confidence: ${s}%`
+      : `⚠️ Low confidence: ${s}%`;
+
   }catch{
     encOutput.value='[!] Decryption failed';
   }
 }
 
-['encInput','encKey','encAction','encMode','rawHex','encAlgo']
+['encInput','encKey','encAction','encAlgo','encMode','rawHex']
 .forEach(id=>document.getElementById(id).addEventListener('input',realtime));
 
 function tryCommonKeys(){
-  if(encAlgo.value!=='AES'){
-    guessOutput.value='[!] Common keys optimized for AES only';
-    return;
-  }
-  const keys=['fluton','encrypted','event','flutonevent','testnet'];
   let out='';
+  const keys=['fluton','encrypted','event','flutonevent','testnet'];
   keys.forEach(k=>{
     try{
-      const p=guessCipher.value.split(':');
-      const iv=CryptoJS.enc.Hex.parse(p[0]);
-      const data=parseCipherPart(p[1]);
-      const d=decryptWA(data,k,iv,'AES',CryptoJS.mode.CBC);
-      if(d && englishScore(d)>=75){
-        out+=`✔ ${k}\n${d}\n\n`;
-      }
+      const parsed=autoParseInput(guessCipher.value,'AES');
+      const keyWA=keyToWA(k,'AES');
+      const d=CryptoJS.AES.decrypt(
+        {ciphertext:parsed.data},
+        keyWA,
+        {iv:parsed.iv,mode:CryptoJS.mode.CBC,padding:CryptoJS.pad.Pkcs7}
+      ).toString(CryptoJS.enc.Utf8);
+      if(d&&englishScore(d)>=75) out+=`✔ ${k}\n${d}\n\n`;
     }catch{}
   });
   guessOutput.value=out||'✖ No common keys matched';
@@ -266,10 +271,10 @@ function unwrapBase64(){
 function analyzeInput(){
   const t=anInput.value.trim();
   let r=[];
-  if(/^[A-Za-z0-9+/=_-]+$/.test(t)) r.push('[+] Base64-like detected');
-  if(/^[0-9a-fA-F]+$/.test(t)) r.push('[+] HEX (raw bytes)');
-  if(t.includes(':')) r.push('[+] IV-prefixed format');
-  r.push('[✓] Suggested: unwrap → decrypt');
+  if(/^[A-Za-z0-9+/=_-]+$/.test(t)) r.push('[+] Base64-like');
+  if(/^[0-9a-fA-F]+$/.test(t)) r.push('[+] HEX');
+  if(t.includes(':')) r.push('[+] IV:DATA format');
+  r.push('[✓] Try decrypt directly');
   anOutput.value=r.join('\n');
 }
 anInput.addEventListener('input',analyzeInput);
